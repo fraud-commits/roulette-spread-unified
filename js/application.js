@@ -999,43 +999,17 @@ function drawWinnerChip(context, x, y) {
    РАДАР (Chart.js)
    ------------------------------------------------------------ */
 function drawRadar(labels, data, winnerLabel = null) {
-   $("#myChart").remove();
-   $(".roulette-container").append('<canvas id="myChart" class="neww"></canvas>');
+    $("#myChart").remove();
+    $(".wheel-winner-overlay").remove();
+    $(".roulette-container").append('<canvas id="myChart" class="neww"></canvas>');
    updateBackgrounds();
 
    const grey = "rgb(77, 77, 77)";
    const transparent = "transparent";
    const ctx = $("#myChart");
 
-    const winnerPlugin = {
-       afterDraw: chart => {
-          if (winnerLabel === null || winnerLabel === undefined) return;
-          const winnerIndex = labels.indexOf(String(winnerLabel));
-          if (winnerIndex < 0) return;
-          const image = IMG["WinGame.png"];
-          if (!image || !image.complete || !image.naturalWidth) return;
-
-          const scale = chart.scales && (chart.scales.r || chart.scales["scale"]);
-          if (!scale) return;
-          const centerX = scale.xCenter !== undefined ? scale.xCenter : (chart.chartArea.left + chart.chartArea.right) / 2;
-          const centerY = scale.yCenter !== undefined ? scale.yCenter : (chart.chartArea.top + chart.chartArea.bottom) / 2;
-          const angle = typeof scale.getIndexAngle === "function"
-             ? scale.getIndexAngle(winnerIndex)
-             : (-Math.PI / 2 + (Math.PI * 2 * winnerIndex / labels.length));
-          const radius = (scale.drawingArea || 170) + 18;
-          const size = 72;
-          const x = centerX + Math.cos(angle) * radius - size / 2;
-          const y = centerY + Math.sin(angle) * radius - size / 2;
-          const context = chart.ctx;
-          context.save();
-          context.drawImage(image, x, y, size, size);
-          context.restore();
-       }
-    };
-
     new Chart(ctx, {
        type: "radar",
-       plugins: [winnerPlugin],
        data: {
          labels: labels,
          datasets: [{
@@ -1092,8 +1066,23 @@ function drawRadar(labels, data, winnerLabel = null) {
             gridLines: { color: "rgba(255, 255, 255, 0.2)" },
             angleLines: { color: "white" }
          }
-      }
-   });
+       }
+    });
+
+    if (winnerLabel !== null && winnerLabel !== undefined) {
+       const winnerIndex = labels.indexOf(String(winnerLabel));
+       const image = IMG["WinGame.png"];
+       if (winnerIndex >= 0 && image && image.src) {
+          const angle = -Math.PI / 2 + (Math.PI * 2 * winnerIndex / labels.length);
+          const overlay = document.createElement("img");
+          overlay.className = "wheel-winner-overlay";
+          overlay.src = image.src;
+          overlay.alt = "Winning number " + winnerLabel;
+          overlay.style.left = (50 + Math.cos(angle) * 43) + "%";
+          overlay.style.top = (50 + Math.sin(angle) * 43) + "%";
+          document.querySelector(".roulette-container")?.appendChild(overlay);
+       }
+    }
 }
 
 /* ------------------------------------------------------------
