@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.19",
+   version: "2.6.20",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1138,7 +1138,7 @@ function changeToImg() {
       type: "view",
       dpi: 144,
         scale: 2,
-       backgroundColor: "#ffffff",
+       backgroundColor: null,
       onclone: function (clonedDocument) {
          const clonedArea = clonedDocument.getElementById(toImgArea.id);
          if (!clonedArea) return;
@@ -1150,7 +1150,7 @@ function changeToImg() {
           clonedArea.style.border = "0";
           clonedArea.style.borderRadius = "0";
           clonedArea.style.boxShadow = "none";
-          clonedArea.style.background = "#ffffff";
+           clonedArea.style.background = "transparent";
           clonedArea.style.setProperty("width", isLayout ? "1000px" : "500px", "important");
           clonedArea.style.setProperty("min-width", "0", "important");
           clonedArea.style.setProperty("max-width", "none", "important");
@@ -1205,16 +1205,30 @@ function changeToImg() {
           }
       }
     }).then(function (canvas) {
-       // html2canvas can retain the original Tableau container width even
-       // after the export clone is narrowed. Crop that unused white area so
-       // a Wheel example is a compact image instead of a left-aligned wheel
-       // surrounded by a large blank canvas.
-       const targetWidth = (isLayout ? 1000 : 500) * 2; // export scale: 2x
-       if (canvas.width > targetWidth) {
+       // Crop transparent margins so each example contains only its actual
+       // title and graphic instead of a large blank Tableau container.
+       const pixels = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data;
+       let minX = canvas.width, minY = canvas.height, maxX = -1, maxY = -1;
+       for (let y = 0; y < canvas.height; y++) {
+          for (let x = 0; x < canvas.width; x++) {
+             if (pixels[(y * canvas.width + x) * 4 + 3] > 8) {
+                if (x < minX) minX = x;
+                if (y < minY) minY = y;
+                if (x > maxX) maxX = x;
+                if (y > maxY) maxY = y;
+             }
+          }
+       }
+       if (maxX >= 0) {
+          const padding = 20;
+          const left = Math.max(0, minX - padding);
+          const top = Math.max(0, minY - padding);
+          const right = Math.min(canvas.width, maxX + padding + 1);
+          const bottom = Math.min(canvas.height, maxY + padding + 1);
           const cropped = document.createElement("canvas");
-          cropped.width = targetWidth;
-          cropped.height = canvas.height;
-          cropped.getContext("2d").drawImage(canvas, 0, 0, targetWidth, canvas.height, 0, 0, targetWidth, canvas.height);
+          cropped.width = right - left;
+          cropped.height = bottom - top;
+          cropped.getContext("2d").drawImage(canvas, left, top, cropped.width, cropped.height, 0, 0, cropped.width, cropped.height);
           canvas = cropped;
        }
        const sreenshot = document.getElementById("sreenshot");
