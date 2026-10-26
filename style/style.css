@@ -49,11 +49,11 @@ button, select, summary, input { accent-color: var(--lfs-green); }
 .check-setting { padding: 7px 10px; border: 1px solid var(--lfs-border); border-radius: 8px; background: #fff; white-space: nowrap; cursor: pointer; transition: border-color .15s ease, background .15s ease, color .15s ease; }
 .check-setting:hover { border-color: var(--lfs-green); background: var(--lfs-mint); }
 .check-setting input { width: 15px; height: 15px; margin: 0; }
-.wheel-warning { padding: 6px 10px; border: 1px solid #E5C77A; border-radius: 7px; color: #7A5A00; background: #FFF8E3; font-size: 12px; font-weight: 600; }
+.wheel-warning { display: inline-flex; align-items: center; padding: 5px 9px; border: 1px solid #E5C77A; border-radius: 7px; color: #7A5A00; background: #FFF8E3; font-size: 12px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
 
 main { min-height: calc(100vh - 124px); }
 .report-helper { margin: 12px 20px 0; padding: 0; color: var(--lfs-text); font-size: 13px; }
-.report-helper summary { width: fit-content; padding: 6px 10px; border: 1px solid var(--lfs-border); border-radius: 8px; background: #fff; cursor: pointer; color: var(--lfs-green); font-weight: 600; transition: all .15s ease; }
+.report-helper summary { display: flex; align-items: center; gap: 10px; width: fit-content; padding: 6px 10px; border: 1px solid var(--lfs-border); border-radius: 8px; background: #fff; cursor: pointer; color: var(--lfs-green); font-weight: 600; transition: all .15s ease; }
 .report-helper summary:hover, .report-helper[open] summary { border-color: var(--lfs-green); background: var(--lfs-mint); }
 .report-helper-content { display: grid; gap: 8px; max-width: 760px; padding: 14px; margin-top: 8px; border: 1px solid var(--lfs-border); border-radius: 10px; background: var(--lfs-card-bg); box-shadow: 0 8px 24px rgba(0,14,11,.08); }
 .report-helper-content label { font-weight: 600; }
