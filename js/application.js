@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.0.1",
+   version: "2.0.2",
    worksheetName: "work2",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -494,7 +494,6 @@ function render(sumdata) {
    $(".winner-setting").toggle(winIdx !== null);
    if (winIdx === null) state.showWinner = false;
    else if (document.getElementById("winnerToggle")) state.showWinner = document.getElementById("winnerToggle").checked;
-   $(".demo-hint").toggle(DEMO !== null);
 
    let lastWinner = null;
 
