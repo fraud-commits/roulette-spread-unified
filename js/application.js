@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.0.9",
+   version: "2.1.0",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -370,8 +370,9 @@ function fitLayoutCanvas() {
    const widthLimit = wrapper.clientWidth || 1143;
    const sectionTop = section.getBoundingClientRect().top;
    const titleHeight = section.querySelector(".idround")?.getBoundingClientRect().height || 70;
-   const controlsHeight = document.querySelector(".examples")?.getBoundingClientRect().height || 120;
-   const heightLimit = Math.max(240, window.innerHeight - sectionTop - titleHeight - controlsHeight - 48);
+   // Only constrain by the space above the example controls; don't subtract
+   // the full examples section, which can make the actual layout too small.
+   const heightLimit = Math.max(240, window.innerHeight - sectionTop - titleHeight - 48);
    const scale = Math.min(widthLimit / 1143, heightLimit / 480, 1);
 
    canvas.style.width = Math.floor(1143 * scale) + "px";
