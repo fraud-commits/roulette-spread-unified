@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.3.1",
+   version: "2.3.2",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -858,24 +858,25 @@ function changeToImg() {
    const isLayout = !$(".container-2").hasClass("hide");
    const toImgArea = document.getElementById(isLayout ? "imgItcontainerem2" : "imgItcontainerem");
 
-   window.pageYOffset = 0;
-   document.documentElement.scrollTop = 0;
-   document.body.scrollTop = 0;
-
-   html2canvas(toImgArea, {
+    html2canvas(toImgArea, {
       allowTaint: true,
       taintTest: false,
       type: "view",
       dpi: 144,
-      scale: 2,
+       scale: 3,
+       backgroundColor: "#ffffff",
       onclone: function (clonedDocument) {
          const clonedArea = clonedDocument.getElementById(toImgArea.id);
          if (!clonedArea) return;
 
          clonedArea.style.minHeight = "0";
          clonedArea.style.height = "auto";
-         clonedArea.style.margin = "0";
-         clonedArea.style.padding = "10px";
+          clonedArea.style.margin = "0";
+          clonedArea.style.padding = "10px";
+          clonedArea.style.border = "0";
+          clonedArea.style.borderRadius = "0";
+          clonedArea.style.boxShadow = "none";
+          clonedArea.style.background = "#ffffff";
          clonedArea.style.width = isLayout ? "1000px" : "500px";
          clonedArea.style.maxWidth = "none";
 
@@ -916,11 +917,7 @@ function changeToImg2() {
       button.textContent = "Generating…";
    }
 
-   window.pageYOffset = 0;
-   document.documentElement.scrollTop = 0;
-   document.body.scrollTop = 0;
-
-   html2canvas(toImgArea, {
+    html2canvas(toImgArea, {
       allowTaint: true,
       taintTest: false,
       type: "view",
