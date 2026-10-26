@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.4.4",
+   version: "2.4.5",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -691,7 +691,8 @@ function render(sumdata) {
    $(".longcnt").text(LongBreak);
 
    /* --- заголовок --- */
-    $(".idround").text(makeTitle(worksheetData, RoundID, RoundTime));
+     $(".container .idround").text(makeTitle(worksheetData, RoundID, RoundTime, false));
+     $(".container-2 .idround").text(makeTitle(worksheetData, RoundID, RoundTime, true));
      window.__rouletteReportData = { rows: worksheetData, cols: cols };
      window.__rouletteReportStats = {
         rounds: Array.from(reportRounds.entries(), ([id, positions]) => [id, Array.from(positions)]),
@@ -783,9 +784,9 @@ function parseRoundDate(value) {
 }
 
 /* Заголовок по диапазону дат данных */
-function makeTitle(worksheetData, RoundID, RoundTime) {
+function makeTitle(worksheetData, RoundID, RoundTime, layoutMode) {
    const roundIds = new Set(worksheetData.map(row => getCellText(row[RoundID])).filter(Boolean));
-   const isLayout = $(".container").hasClass("hide");
+   const isLayout = layoutMode === undefined ? $(".container").hasClass("hide") : layoutMode;
 
    // A selected round must take priority over the date label. The old tool
    // displayed the selected Round Id directly; checking dates first caused
