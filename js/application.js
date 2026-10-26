@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.0.0 unified",
+   version: "2.0.1",
    worksheetName: "work2",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -306,6 +306,7 @@ function buildDemoData() {
    ИНИЦИАЛИЗАЦИЯ (Tableau / демо)
    ------------------------------------------------------------ */
 $(document).ready(function () {
+   $(".version-label").text(CONFIG.version);
    updateBackgrounds();
 
    if (typeof tableau !== "undefined" && tableau.extensions) {
