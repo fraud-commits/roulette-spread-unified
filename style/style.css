@@ -42,6 +42,10 @@ button, select, summary, input { accent-color: var(--lfs-green); }
 .settings select, .report-helper-content select { min-height: 34px; border: 1px solid var(--lfs-border); border-radius: 8px; color: var(--lfs-text); background-color: #fff; }
 .settings select { width: auto; min-width: 138px; }
 .settings select:focus, .report-helper-content select:focus { border-color: var(--lfs-green); box-shadow: 0 0 0 3px rgba(0,152,125,.12); }
+.column-test { margin: 10px 20px 0; color: var(--lfs-text); font-size: 13px; }
+.column-test summary { width: fit-content; padding: 6px 10px; border: 1px solid var(--lfs-border); border-radius: 8px; color: var(--lfs-green); background: #fff; cursor: pointer; font-weight: 600; }
+.column-test[open] summary { background: var(--lfs-mint); }
+.column-test pre { max-height: 280px; overflow: auto; margin: 8px 0 0; padding: 12px; border: 1px solid var(--lfs-border); border-radius: 8px; color: var(--lfs-text); background: #F7FAF9; font: 12px/1.45 Consolas, monospace; white-space: pre-wrap; }
 .check-setting { padding: 7px 10px; border: 1px solid var(--lfs-border); border-radius: 8px; background: #fff; white-space: nowrap; cursor: pointer; transition: border-color .15s ease, background .15s ease, color .15s ease; }
 .check-setting:hover { border-color: var(--lfs-green); background: var(--lfs-mint); }
 .check-setting input { width: 15px; height: 15px; margin: 0; }

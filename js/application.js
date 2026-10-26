@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.5.9",
+   version: "2.6.0",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -475,6 +475,26 @@ function updateCurrencyLabels() {
 /* ------------------------------------------------------------
    ОПРЕДЕЛЕНИЕ КОЛОНОК ПО ИМЕНАМ (с фолбэком на CONFIG.columns)
    ------------------------------------------------------------ */
+function updateColumnDiagnostics(sumdata, cols) {
+   const output = document.getElementById("columnTestOutput");
+   if (!output) return;
+   const src = sumdata.columns || [];
+   const roleByIndex = new Map(Object.entries(cols).map(([role, index]) => [index, role]));
+   const sample = row => row ? getCellText(row) : "";
+   const rows = sumdata.data || [];
+   const lines = [
+      "Worksheet columns: " + src.length,
+      "Detected mapping: " + Object.entries(cols).map(([role, index]) => role + "=" + index).join(" | "),
+      "",
+      "INDEX | FIELD/CAPTION | DETECTED ROLE | SAMPLE"
+   ];
+   src.forEach((column, index) => {
+      const name = column.fieldName || column.fieldCaption || column.caption || column.name || "(no caption)";
+      lines.push(String(index).padStart(5) + " | " + String(name) + " | " + (roleByIndex.get(String(index)) || "-") + " | " + sample(rows[0]?.[index]));
+   });
+   output.textContent = lines.join("\n");
+}
+
 function detectColumns(sumdata) {
    // Columns are identified by their stable Tableau position, not by captions.
    // Different clients may rename fields, but the worksheet order is fixed:
@@ -500,6 +520,7 @@ function detectColumns(sumdata) {
    }
 
    CURRENT_COLUMNS = cols;
+   updateColumnDiagnostics(sumdata, cols);
    return cols;
 }
 
