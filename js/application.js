@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.4",
+   version: "2.6.5",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -660,8 +660,10 @@ function render(sumdata) {
    const order = WHEELS[state.wheel].order;
    let data = order.map(() => 0);
 
-   const betIdx = currencyIndex(worksheetData);   // текущая колонка валюты
-   const winIdx = (cols.WinningNumber !== null && worksheetData[0] && cols.WinningNumber < worksheetData[0].length)
+    const betIdx = currencyIndex(worksheetData);   // текущая колонка валюты
+    const displayedRounds = new Set(worksheetData.map(row => getCellText(row[RoundID])).filter(Boolean));
+    const singleRound = displayedRounds.size === 1;
+    const winIdx = (singleRound && cols.WinningNumber !== null && worksheetData[0] && cols.WinningNumber < worksheetData[0].length)
                     ? cols.WinningNumber : null;
    $(".winner-setting").toggle(winIdx !== null);
    if (winIdx === null) state.showWinner = false;
