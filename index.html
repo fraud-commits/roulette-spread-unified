@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roulette Spread — Unified</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style/style.css?v=2.4.7">
+  <link rel="stylesheet" href="style/style.css?v=2.4.8">
 </head>
 <body>
   <header class="toolbar">
@@ -26,7 +26,7 @@
       </div>
       <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
       <span>CURRENCY: <b class="cur-label">EUR</b></span>
-      <span>VERSION <b class="version-label">2.4.7</b></span>
+      <span>VERSION <b class="version-label">2.4.8</b></span>
     </div>
   </header>
 
@@ -51,7 +51,6 @@
     <summary>Roulette report helper</summary>
     <div class="report-helper-content">
       <div id="reportAnswer" class="report-answer report-findings" aria-live="polite">Open the helper to analyse the current Tableau data and show key findings.</div>
-      <button id="copyReportAnswer" class="btn btn-outline-secondary btn-sm" type="button" disabled>Copy wording</button>
       <small>Findings are calculated from the current Tableau worksheet. Video review, linked-account checks and Roulette SD require separate sources.</small>
     </div>
   </details>
@@ -93,7 +92,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="js/application.js?v=2.4.7"></script>
+  <script src="js/application.js?v=2.4.8"></script>
   <script>
     document.getElementById('wheelSelect').addEventListener('change', function () {
       CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
@@ -112,7 +111,6 @@
       if (state.tableauReady || DEMO !== null) drawChartJS();
     });
     const reportAnswer = document.getElementById('reportAnswer');
-    const copyReportAnswer = document.getElementById('copyReportAnswer');
     let calculatedReportAnswers = {};
     let reportData = null;
     const reportLabels = {
@@ -125,14 +123,12 @@
       const stats = window.__rouletteReportStats;
       if (!stats || !Object.keys(calculatedReportAnswers).length) {
         reportAnswer.textContent = 'Waiting for the current Tableau data…';
-        copyReportAnswer.disabled = true;
         return;
       }
       reportAnswer.innerHTML = Object.keys(reportLabels).map(key => {
         const answer = calculatedReportAnswers[key] || 'Other one';
         return '<div class="report-finding"><strong>' + reportLabels[key] + '</strong><span>' + answer + '</span></div>';
       }).join('');
-      copyReportAnswer.disabled = false;
     }
     window.updateReportHelper = function (rows, cols) {
       reportData = { rows: rows, cols: cols };
@@ -146,20 +142,6 @@
     };
     document.querySelector('.report-helper').addEventListener('toggle', function () {
       if (this.open && window.__rouletteReportStats) updateReportHelper(window.__rouletteReportStats);
-    });
-    copyReportAnswer.addEventListener('click', async function () {
-      try {
-        await navigator.clipboard.writeText(reportAnswer.textContent);
-        this.textContent = 'Copied';
-        setTimeout(() => { this.textContent = 'Copy wording'; }, 1400);
-      } catch (error) {
-        const range = document.createRange();
-        range.selectNodeContents(reportAnswer);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        this.textContent = 'Select and copy';
-      }
     });
 
     function reportCell(row, index) {
