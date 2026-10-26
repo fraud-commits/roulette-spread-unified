@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.3.4",
+   version: "2.3.5",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -512,14 +512,23 @@ function drawChartJS() {
 
 function getSelectedRoundIds(selectedMarks) {
    const ids = new Set();
-   const firstMarkTable = selectedMarks && selectedMarks.data && selectedMarks.data[0] && selectedMarks.data[0].data;
-   const columns = (firstMarkTable && firstMarkTable.columns) || (selectedMarks && selectedMarks.columns) || [];
+   const firstMark = selectedMarks && selectedMarks.data && selectedMarks.data[0];
+   const firstMarkData = firstMark && firstMark.data;
+   const firstMarkTable = firstMarkData && !Array.isArray(firstMarkData) ? firstMarkData : null;
+   const columns = (firstMark && firstMark.columns) || (firstMarkTable && firstMarkTable.columns) || (selectedMarks && selectedMarks.columns) || [];
    const roundIndex = columns.findIndex(c => /ROUND\s*ID/i.test(String(c.fieldName || c.fieldCaption || c.caption || c.name || "")));
-   if (roundIndex === -1 || !selectedMarks.data) return ids;
+   // The usual worksheet order is Round Time, Round Id. This fallback also
+   // handles Tableau mark payloads that omit the column metadata.
+   const index = roundIndex === -1 ? CONFIG.columns.RoundID : roundIndex;
+   if (!selectedMarks.data) return ids;
    selectedMarks.data.forEach(mark => {
-      const rows = mark.data && mark.data.data ? mark.data.data : (Array.isArray(mark.data) ? mark.data : [mark]);
+      const markData = mark && mark.data;
+      let rows;
+      if (markData && Array.isArray(markData.data)) rows = markData.data;
+      else if (Array.isArray(markData)) rows = markData.length && (markData[0].formattedValue !== undefined || markData[0].value !== undefined) ? [markData] : markData;
+      else rows = [mark];
       rows.forEach(row => {
-         const value = getCellText(row[roundIndex]);
+         const value = getCellText(row[index]);
          if (value) ids.add(value);
       });
    });
