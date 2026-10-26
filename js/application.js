@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.3.8",
+   version: "2.3.9",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -442,7 +442,7 @@ function detectColumns(sumdata) {
       if (name.indexOf("POSITION") !== -1)                 cols.BetPosition = i;
       else if (name.indexOf("ROUND ID") !== -1)            cols.RoundID = i;
       else if (name.indexOf("TIME") !== -1)                cols.RoundTime = i;
-      else if (name.indexOf("WIN RESULT") !== -1 || name.indexOf("WINNING NUMBER") !== -1 || name.indexOf("WIN NUMBER") !== -1) cols.WinningNumber = i;
+       else if (name === "WIN" || name.indexOf("WIN RESULT") !== -1 || name.indexOf("WINNING NUMBER") !== -1 || name.indexOf("WIN NUMBER") !== -1) cols.WinningNumber = i;
       else if (name.indexOf("NET") !== -1 && name.indexOf("EUR") !== -1)   cols.NetEur = i;
       else if (name.indexOf("NET") !== -1 && (name.indexOf("NAT") !== -1 || name.indexOf("LOCAL") !== -1 || i === 6)) cols.NetNative = i;
       else if (name.indexOf("BET") !== -1 && name.indexOf("EUR") !== -1)   cols.BetEur = i;
