@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.2.7",
+   version: "2.2.8",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -524,7 +524,7 @@ function render(sumdata) {
       updateBackgrounds();
    } else if (!gameTypeWheel && CONFIG.wheelAuto && !isManualWheel()) {
       // Fallback for data without a Game Type field: a 00 bet implies American.
-      const has00 = worksheetData.some(r => /00/.test(String(r[cols.BetPosition].formattedValue || "")));
+       const has00 = worksheetData.slice(0, 2000).some(r => /00/.test(String(r[cols.BetPosition]?.formattedValue || "")));
       if (has00 && state.wheel !== "AMERICAN") {
          state.wheel = "AMERICAN";
          updateWheelLabel();
@@ -560,18 +560,15 @@ function render(sumdata) {
     /* --- обход всех строк --- */
     // A long Tableau selection can contain thousands of rows. Keep only the
     // last displayed chip value for each position and paint each position once.
-    const chipAmounts = new Map();
+     const chipAmounts = new Map();
+     const positionCounts = new Map();
     for (let i = 0; i < worksheetData.length; i++) {
       const row = worksheetData[i];
        const pos = normalizeBetPosition(getCellText(row[cols.BetPosition]));
       const amountCell = row[betIdx];
       const amount = parseDisplayedAmount(amountCell);
 
-      /* радар: считаем только STRAIGHT_UP и SPLIT (как в оригинале) */
-      betNumbers(pos).forEach(n => {
-         const idx = order.indexOf(n);
-         if (idx !== -1) data[idx] += 1;
-      });
+       positionCounts.set(pos, (positionCounts.get(pos) || 0) + 1);
 
        /* Запоминаем фишку; рисуем все уникальные позиции после обхода строк. */
        chipAmounts.set(pos, amount);
@@ -583,15 +580,21 @@ function render(sumdata) {
       }
 
       /* перерывы */
-      if (worksheetData.length > 4) {
-         const iNext = i === worksheetData.length - 1 ? i : i + 1;
-         const delta = breakDelta(getCellText(row[RoundTime]), getCellText(worksheetData[iNext][RoundTime]));
-         if (delta.kind === "skip")  RoundSkipp += 1;
-         else if (delta.kind === "short") ShortBreak += 1;
-         else if (delta.kind === "long")  LongBreak += 1;
-         else if (getCellText(row[RoundID]) !== getCellText(worksheetData[iNext][RoundID])) Sequential += 1;
-      }
-   }
+       if (i < worksheetData.length - 1 && getCellText(row[RoundID]) !== getCellText(worksheetData[i + 1][RoundID])) {
+          const delta = breakDelta(getCellText(row[RoundTime]), getCellText(worksheetData[i + 1][RoundTime]));
+          if (delta.kind === "skip")  RoundSkipp += 1;
+          else if (delta.kind === "short") ShortBreak += 1;
+          else if (delta.kind === "long")  LongBreak += 1;
+          else Sequential += 1;
+       }
+    }
+
+     positionCounts.forEach((count, pos) => {
+        betNumbers(pos).forEach(n => {
+           const idx = order.indexOf(n);
+           if (idx !== -1) data[idx] += count;
+        });
+     });
 
     chipAmounts.forEach((amount, pos) => {
        const chipXY = (OUTSIDE[pos] !== undefined)
@@ -612,9 +615,7 @@ function render(sumdata) {
 
    /* --- заголовок --- */
     $(".idround").text(makeTitle(worksheetData, RoundID, RoundTime));
-    if (typeof updateReportHelper === "function") updateReportHelper(worksheetData, cols);
-    else window.pendingReportData = { rows: worksheetData, cols: cols };
-    window.__rouletteReportData = { rows: worksheetData, cols: cols };
+     window.__rouletteReportData = { rows: worksheetData, cols: cols };
 
     drawRadar(order, data);
 }
@@ -630,7 +631,9 @@ function detectWheelFromData(rows) {
    let sawAmerican = false;
    let sawEuropean = false;
 
-   for (const row of rows) {
+   // Game Type is repeated on every row; sample the first rows only so a
+   // large Tableau summary does not block the first render.
+   for (const row of rows.slice(0, 200)) {
       for (const cell of row) {
           const value = getCellText(cell);
          if (/america/i.test(value)) sawAmerican = true;
