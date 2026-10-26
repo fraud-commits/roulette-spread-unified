@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.3",
+   version: "2.6.4",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -939,6 +939,16 @@ function drawRadar(labels, data) {
             legend: { display: false },
              tooltip: {
                 enabled: true,
+                backgroundColor: "rgba(255,255,255,.97)",
+                titleColor: "#1D2B27",
+                bodyColor: "#008F77",
+                borderColor: "#C8DED5",
+                borderWidth: 1,
+                cornerRadius: 8,
+                displayColors: false,
+                padding: 10,
+                titleFont: { weight: "600", size: 12 },
+                bodyFont: { weight: "600", size: 12 },
                 callbacks: {
                    title: items => items.length ? "Number: " + labels[items[0].dataIndex] : "",
                    label: item => {
