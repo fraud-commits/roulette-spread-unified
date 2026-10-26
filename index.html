@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roulette Spread — Unified</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style/style.css?v=2.1.5">
+  <link rel="stylesheet" href="style/style.css?v=2.1.9">
 </head>
 <body>
   <header class="toolbar">
@@ -17,7 +17,7 @@
     <div class="toolbar-meta">
       <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
       <span>CURRENCY: <b class="cur-label">EUR</b></span>
-      <span>VERSION <b class="version-label">2.1.8</b></span>
+      <span>VERSION <b class="version-label">2.1.9</b></span>
     </div>
   </header>
 
@@ -36,6 +36,31 @@
     </label>
     <label class="check-setting winner-setting"><input id="winnerToggle" type="checkbox" checked> Highlight winning number</label>
   </nav>
+
+  <details class="report-helper" data-html2canvas-ignore="true">
+    <summary>Roulette report helper</summary>
+    <div class="report-helper-content">
+      <label for="reportQuestion">Choose a report question</label>
+      <select id="reportQuestion" class="form-select form-select-sm">
+        <option value="">Select a topic…</option>
+        <option value="continuity">Bet continuity</option>
+        <option value="breaks">Breaks during analysis</option>
+        <option value="wheelSequential">Covering wheel sequential?</option>
+        <option value="layoutSequential">Covering layout sequential?</option>
+        <option value="sectors">Covering various wheel sectors at the same time?</option>
+        <option value="random">Covering randomly allocated numbers?</option>
+        <option value="repeatRounds">Repeats the same bets from round to round?</option>
+        <option value="repeatTables">Repeating the same bets on various roulette tables?</option>
+        <option value="betChoice">Choice of the bets</option>
+        <option value="opposite">Signs of opposite betting?</option>
+        <option value="video">Video records for most successful rounds checked?</option>
+        <option value="deviation">Roulette standard deviation</option>
+      </select>
+      <div id="reportAnswer" class="report-answer" aria-live="polite">Select a topic to see the manual guidance and a report-ready wording template.</div>
+      <button id="copyReportAnswer" class="btn btn-outline-secondary btn-sm" type="button" disabled>Copy wording</button>
+      <small>Templates are prompts, not automatic findings. Confirm each statement against the session data and reviewed footage.</small>
+    </div>
+  </details>
 
   <main>
     <section class="view-container container" id="imgItcontainerem">
@@ -69,7 +94,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="js/application.js?v=2.1.8"></script>
+  <script src="js/application.js?v=2.1.9"></script>
   <script>
     document.getElementById('wheelSelect').addEventListener('change', function () {
       CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
@@ -82,6 +107,41 @@
     document.getElementById('winnerToggle').addEventListener('change', function () {
       state.showWinner = this.checked;
       if (state.tableauReady || DEMO !== null) drawChartJS();
+    });
+    const reportAnswers = {
+      continuity: "Manual guidance: assess whether betting continued consistently across the observed session.\n\nReport wording: Bet continuity: [continuous / intermittent]. The player placed bets across [X of Y] observed rounds, with [brief description of any gaps].",
+      breaks: "Manual guidance: Few = up to 2; Several = 3–5; Many = 6+. For the on-screen gap counters, this extension classifies 3–10 minutes as a skip, over 10–30 minutes as a short break, and over 30 minutes as a long break.\n\nReport wording: Breaks during analysis: [none / few / several / many]. Observed [X] skips, [Y] short breaks, and [Z] long breaks.",
+      wheelSequential: "Manual guidance: wheel-sequential coverage means bets on at least five consecutive pockets in the physical wheel order—not numeric order. Racetrack sectors (Tiers, Orphelins, Voisins du Zéro, and Jeu Zéro) should be identified by name when applicable.\n\nReport wording: Wheel-sequential coverage: [observed / not observed]. The covered wheel numbers were [numbers in wheel order] ([count] numbers). [If applicable: The pattern corresponds to the [sector] sector.]",
+      layoutSequential: "Manual guidance: layout-sequential coverage means bets on at least five consecutive numbers on the betting layout (for example, 31–35). This is distinct from physical wheel order.\n\nReport wording: Layout-sequential coverage: [observed / not observed]. The covered layout numbers were [numbers] over [rounds/examples].",
+      sectors: "Manual guidance: note when bets cover multiple wheel sectors at the same time; distinguish sector-based patterns from layout patterns.\n\nReport wording: Multiple wheel sectors: [observed / not observed]. Bets covered [sector(s)/numbers] [simultaneously / across the session].",
+      random: "Manual guidance: use this when selected numbers appear distributed without a clear wheel-sector or layout sequence. Avoid calling a pattern random without reviewing enough rounds.\n\nReport wording: Randomly allocated numbers: [observed / not observed] in the reviewed sample of [X] rounds. Examples: [numbers/rounds].",
+      repeatRounds: "Manual guidance: assess whether the player repeats the same bet positions from one round to the next.\n\nReport wording: Repeated bets between rounds: [observed / not observed]. The same positions [positions] recurred in [X] consecutive / [X of Y] reviewed rounds.",
+      repeatTables: "Manual guidance: compare bet positions across roulette tables, if data for multiple tables is available.\n\nReport wording: Repeated bets across tables: [observed / not observed]. The pattern [positions/pattern] appeared on [table(s)] during [period].",
+      betChoice: "Manual guidance: state whether the player mostly varied bet positions or repeated them. Support the assessment with reviewed rounds.\n\nReport wording: Bet choice: The player [mostly varied / frequently repeated] bet positions. [Add concise evidence, such as X repeated positions across Y rounds.]",
+      opposite: "Manual guidance: assess whether activity suggests coordinated opposing bets with another account; this requires evidence beyond a single player's spread.\n\nReport wording: Signs of opposite betting: [observed / not observed]. [Summarize matched opposing positions, linked account(s), round count, and wager/turnover share, if verified.]",
+      video: "Manual guidance: confirm whether Risk Analysts reviewed footage for the most successful rounds and record the result.\n\nReport wording: Video review: Footage for [X] of the most successful rounds was reviewed. [Summarize relevant observations / No irregularities or procedural issues were identified.]",
+      deviation: "Manual guidance: the manual says Roulette Standard Deviation requires Team Configuration setting ReportRouletteDeviationComment = 1. A normal-range result alone does not establish a betting strategy.\n\nReport wording: Roulette standard deviation: [checked / not checked]. [Summarize the report result and any predominant numbers/sectors, if present.]"
+    };
+    const reportQuestion = document.getElementById('reportQuestion');
+    const reportAnswer = document.getElementById('reportAnswer');
+    const copyReportAnswer = document.getElementById('copyReportAnswer');
+    reportQuestion.addEventListener('change', function () {
+      reportAnswer.textContent = reportAnswers[this.value] || 'Select a topic to see the manual guidance and a report-ready wording template.';
+      copyReportAnswer.disabled = !reportAnswers[this.value];
+    });
+    copyReportAnswer.addEventListener('click', async function () {
+      try {
+        await navigator.clipboard.writeText(reportAnswers[reportQuestion.value]);
+        this.textContent = 'Copied';
+        setTimeout(() => { this.textContent = 'Copy wording'; }, 1400);
+      } catch (error) {
+        const range = document.createRange();
+        range.selectNodeContents(reportAnswer);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        this.textContent = 'Select and copy';
+      }
     });
   </script>
 </body>
