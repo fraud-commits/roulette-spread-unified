@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roulette Spread — Unified</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style/style.css?v=2.3.7">
+  <link rel="stylesheet" href="style/style.css?v=2.3.8">
 </head>
 <body>
   <header class="toolbar">
@@ -26,7 +26,7 @@
       </div>
       <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
       <span>CURRENCY: <b class="cur-label">EUR</b></span>
-      <span>VERSION <b class="version-label">2.3.7</b></span>
+      <span>VERSION <b class="version-label">2.3.8</b></span>
     </div>
   </header>
 
@@ -88,7 +88,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="js/application.js?v=2.3.7"></script>
+  <script src="js/application.js?v=2.3.8"></script>
   <script>
     document.getElementById('wheelSelect').addEventListener('change', function () {
       CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
@@ -230,7 +230,13 @@
        const multiSectorRound = sectorMatches.some(items => items.length >= 2);
        answers.layoutSequential = layoutSequentialRate >= .5 ? 'In many sequential games' : layoutSequentialRate > 0 ? 'From time to time' : rounds.length <= 1 ? 'Only one game round held' : 'No';
        answers.sectors = multiSectorRound ? 'Yes — ' + matchedSectorNames.join(', ') : 'No';
-       answers.random = uniqueRate >= .75 && !sequenceRate(wheelRuns) && !sequenceRate(layoutRuns) && matchedSectorNames.length === 0 ? 'No, placing bets chaotically' : 'No';
+       const randomRoundRate = rounds.filter((set, i) => {
+         const hasSeveralNumbers = set.size >= 2;
+         const hasSequence = wheelRuns[i] >= 5 || layoutRuns[i] >= 5 || layoutSpecialRun[i] >= 5;
+         const hasSectorPattern = sectorMatches[i].length > 0;
+         return hasSeveralNumbers && !hasSequence && !hasSectorPattern;
+       }).length / Math.max(rounds.length, 1);
+       answers.random = randomRoundRate >= .6 ? 'Yes' : randomRoundRate > 0 ? 'From time to time' : 'No, placing bets chaotically';
       answers.repeatRounds = rounds.length <= 1 ? 'Only one game round held' : answerFrequency(repeatRate, 'Frequently', 'Never');
       answers.repeatTables = 'Other one';
       answers.betChoice = uniqueRate >= .75 ? 'When it comes to the bet variation, the player varied the choice of the bet spots chaotically' : 'When it comes to the bet variation, the player mostly repeated the choice of the bet spots';
