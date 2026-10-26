@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roulette Spread — Unified</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style/style.css?v=2.3.0">
+  <link rel="stylesheet" href="style/style.css?v=2.3.1">
 </head>
 <body>
   <header class="toolbar">
@@ -26,7 +26,7 @@
       </div>
       <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
       <span>CURRENCY: <b class="cur-label">EUR</b></span>
-      <span>VERSION <b class="version-label">2.3.0</b></span>
+      <span>VERSION <b class="version-label">2.3.1</b></span>
     </div>
   </header>
 
@@ -104,7 +104,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="js/application.js?v=2.3.0"></script>
+  <script src="js/application.js?v=2.3.1"></script>
   <script>
     document.getElementById('wheelSelect').addEventListener('change', function () {
       CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
@@ -127,6 +127,14 @@
     const copyReportAnswer = document.getElementById('copyReportAnswer');
     let calculatedReportAnswers = {};
     let reportData = null;
+    function reportText(question) {
+      const answer = calculatedReportAnswers[question];
+      if (!answer) return 'Choose a question to analyse the current Tableau data and generate a report-ready answer.';
+      const stats = window.__rouletteReportStats;
+      const roundCount = stats && stats.rounds ? stats.rounds.length : 0;
+      const label = reportQuestion.options[reportQuestion.selectedIndex]?.text || question;
+      return `Answer: ${answer}\n\nKey findings\n• ${label} was analysed from the current Tableau data.\n• Reviewed game rounds: ${roundCount}.\n• The answer is based on the bet positions and their repetition in the selected data.`;
+    }
     window.updateReportHelper = function (rows, cols) {
       reportData = { rows: rows, cols: cols };
       try {
@@ -135,18 +143,19 @@
         console.warn('Report helper could not analyse the worksheet:', error);
         calculatedReportAnswers = { wheelSequential: 'Other one', layoutSequential: 'Other one', sectors: 'Other one', random: 'Other one', repeatRounds: 'Other one', repeatTables: 'Other one', betChoice: 'Other one' };
       }
-      reportAnswer.textContent = calculatedReportAnswers[reportQuestion.value] || 'Choose a question to analyse the current Tableau data and generate a report-ready answer.';
+      reportAnswer.textContent = reportText(reportQuestion.value);
       copyReportAnswer.disabled = !reportQuestion.value || !calculatedReportAnswers[reportQuestion.value];
     };
     if (window.pendingReportData) updateReportHelper(window.pendingReportData.rows, window.pendingReportData.cols);
     reportQuestion.addEventListener('change', function () {
       try {
         if (!reportData && window.__rouletteReportData) reportData = window.__rouletteReportData;
-        if (reportData) calculatedReportAnswers = calculateReportAnswers(reportData.rows, reportData.cols);
+      if (window.__rouletteReportStats) calculatedReportAnswers = calculateReportAnswers(window.__rouletteReportStats);
+      else if (reportData) calculatedReportAnswers = calculateReportAnswers(reportData.rows, reportData.cols);
       } catch (error) {
         calculatedReportAnswers = { wheelSequential: 'Other one', layoutSequential: 'Other one', sectors: 'Other one', random: 'Other one', repeatRounds: 'Other one', repeatTables: 'Other one', betChoice: 'Other one' };
       }
-      reportAnswer.textContent = calculatedReportAnswers[this.value] || 'Choose a question to analyse the current Tableau data and generate a report-ready answer.';
+      reportAnswer.textContent = reportText(this.value);
       copyReportAnswer.disabled = !calculatedReportAnswers[this.value];
     });
     copyReportAnswer.addEventListener('click', async function () {
@@ -193,7 +202,14 @@
     }
     function calculateReportAnswers(rows, cols) {
       const roundMap = new Map();
-      rows.forEach(row => { const id = reportCell(row, cols.RoundID) || 'unknown'; if (!roundMap.has(id)) roundMap.set(id, new Set()); reportNumbers(reportCell(row, cols.BetPosition)).forEach(n => roundMap.get(id).add(n)); });
+      let allPositions;
+      if (rows && rows.rounds && !cols) {
+        rows.rounds.forEach(([id, positions]) => { roundMap.set(id, new Set(positions.flatMap(reportNumbers))); });
+        allPositions = Object.keys(rows.positionCounts || {});
+      } else {
+        rows.forEach(row => { const id = reportCell(row, cols.RoundID) || 'unknown'; if (!roundMap.has(id)) roundMap.set(id, new Set()); reportNumbers(reportCell(row, cols.BetPosition)).forEach(n => roundMap.get(id).add(n)); });
+        allPositions = rows.map(row => reportCell(row, cols.BetPosition)).filter(Boolean);
+      }
       const rounds = Array.from(roundMap.values()).filter(set => set.size);
       const wheelOrder = (document.getElementById('wheelSelect')?.value === 'AMERICAN' ? ['0','28','9','26','30','11','7','20','32','17','5','22','34','15','3','24','36','13','1','00','27','10','25','29','12','8','19','31','18','6','21','33','16','4','23','35','14','2'] : ['0','32','15','19','4','21','2','25','17','34','6','27','13','36','11','30','8','23','10','5','24','16','33','1','20','14','31','9','22','18','29','7','28','12','35','3','26']);
       const allNumbers = [...new Set([...roundMap.values()].flatMap(set => [...set]))];
@@ -202,8 +218,7 @@
       const sequenceRate = runs => runs.filter(n => n >= 5).length / Math.max(rounds.length, 1);
       const consecutiveMatches = rounds.slice(1).filter((set, i) => { const previous = rounds[i]; return previous.size && [...set].filter(n => previous.has(n)).length / Math.max(set.size, previous.size) >= .7; }).length;
       const repeatRate = consecutiveMatches / Math.max(rounds.length - 1, 1);
-      const allPositions = rows.map(row => reportCell(row, cols.BetPosition)).filter(Boolean);
-      const uniqueRate = new Set(allPositions).size / Math.max(allPositions.length, 1);
+       const uniqueRate = new Set(allPositions).size / Math.max(rows.totalPositions || allPositions.length, 1);
       const sectorCount = new Set(allNumbers.map(n => wheelOrder.indexOf(n) < 13 ? 'sector-a' : wheelOrder.indexOf(n) < 26 ? 'sector-b' : 'sector-c')).size;
       const answers = {};
       answers.wheelSequential = sequenceRate(wheelRuns) >= .5 ? 'In many sequential games' : sequenceRate(wheelRuns) > 0 ? 'From time to time' : rounds.length <= 1 ? 'Only one game round held' : 'No';

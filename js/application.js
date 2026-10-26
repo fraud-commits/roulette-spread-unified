@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.3.0",
+   version: "2.3.1",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -588,9 +588,13 @@ function render(sumdata) {
     // last displayed chip value for each position and paint each position once.
      const chipAmounts = new Map();
      const positionCounts = new Map();
+     const reportRounds = new Map();
     for (let i = 0; i < worksheetData.length; i++) {
       const row = worksheetData[i];
        const pos = normalizeBetPosition(getCellText(row[cols.BetPosition]));
+       const reportRoundId = getCellText(row[RoundID]) || "unknown";
+       if (!reportRounds.has(reportRoundId)) reportRounds.set(reportRoundId, new Set());
+       if (pos) reportRounds.get(reportRoundId).add(pos);
       const amountCell = row[betIdx];
       const amount = parseDisplayedAmount(amountCell);
 
@@ -645,6 +649,11 @@ function render(sumdata) {
    /* --- заголовок --- */
     $(".idround").text(makeTitle(worksheetData, RoundID, RoundTime));
      window.__rouletteReportData = { rows: worksheetData, cols: cols };
+     window.__rouletteReportStats = {
+        rounds: Array.from(reportRounds.entries(), ([id, positions]) => [id, Array.from(positions)]),
+        positionCounts: Object.fromEntries(positionCounts),
+        totalPositions: Array.from(positionCounts.values()).reduce((sum, count) => sum + count, 0)
+     };
 
     drawRadar(order, data);
 }
