@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roulette Spread — Unified</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style/style.css?v=2.3.5">
+  <link rel="stylesheet" href="style/style.css?v=2.3.7">
 </head>
 <body>
   <header class="toolbar">
@@ -26,7 +26,7 @@
       </div>
       <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
       <span>CURRENCY: <b class="cur-label">EUR</b></span>
-      <span>VERSION <b class="version-label">2.3.5</b></span>
+      <span>VERSION <b class="version-label">2.3.7</b></span>
     </div>
   </header>
 
@@ -88,7 +88,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="js/application.js?v=2.3.5"></script>
+  <script src="js/application.js?v=2.3.7"></script>
   <script>
     document.getElementById('wheelSelect').addEventListener('change', function () {
       CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
@@ -114,8 +114,7 @@
       wheelSequential: 'Covering wheel sequential?', layoutSequential: 'Covering layout sequential?',
       sectors: 'Covering various wheel sectors at the same time?', random: 'Covering randomly allocated numbers?',
       repeatRounds: 'Repeats the same bets from round to round?', repeatTables: 'Repeating the same bets on various roulette tables?',
-      betChoice: 'Choice of the bets', continuity: 'Bet continuity', breaks: 'Breaks during analysis',
-      opposite: 'Signs of opposite betting?', video: 'Video records for most successful rounds checked?', deviation: 'Roulette standard deviation'
+      betChoice: 'Choice of the bets'
     };
     function renderReportFindings() {
       const stats = window.__rouletteReportStats;
@@ -172,11 +171,20 @@
       matches.forEach(value => values.push(value.replace(/^_/, '')));
       return values;
     }
-    function maxRun(values, order) {
+    function maxRun(values, order, circular = true) {
       const set = new Set(values), indexes = values.map(v => order.indexOf(v)).filter(i => i >= 0);
       if (!indexes.length) return 0;
       let best = 1;
-      indexes.forEach(start => { let run = 1; while (run < order.length && set.has(order[(start + run) % order.length])) run++; best = Math.max(best, Math.min(run, order.length)); });
+      indexes.forEach(start => {
+        let run = 1;
+        while (run < order.length) {
+          const nextIndex = start + run;
+          if (!circular && nextIndex >= order.length) break;
+          if (!set.has(order[nextIndex % order.length])) break;
+          run++;
+        }
+        best = Math.max(best, Math.min(run, order.length));
+      });
       return best;
     }
     function answerFrequency(rate, yes, no) {
@@ -197,19 +205,32 @@
       }
       const rounds = Array.from(roundMap.values()).filter(set => set.size);
       const wheelOrder = (document.getElementById('wheelSelect')?.value === 'AMERICAN' ? ['0','28','9','26','30','11','7','20','32','17','5','22','34','15','3','24','36','13','1','00','27','10','25','29','12','8','19','31','18','6','21','33','16','4','23','35','14','2'] : ['0','32','15','19','4','21','2','25','17','34','6','27','13','36','11','30','8','23','10','5','24','16','33','1','20','14','31','9','22','18','29','7','28','12','35','3','26']);
-      const allNumbers = [...new Set([...roundMap.values()].flatMap(set => [...set]))];
-      const wheelRuns = rounds.map(set => maxRun([...set], wheelOrder));
-      const layoutRuns = rounds.map(set => maxRun([...set].sort((a,b) => Number(a)-Number(b)), [...set].sort((a,b) => Number(a)-Number(b))));
-      const sequenceRate = runs => runs.filter(n => n >= 5).length / Math.max(rounds.length, 1);
+       const allNumbers = [...new Set([...roundMap.values()].flatMap(set => [...set]))];
+       const layoutOrder = Array.from({ length: 37 }, (_, i) => String(i));
+       const wheelRuns = rounds.map(set => maxRun([...set], wheelOrder));
+       const layoutRuns = rounds.map(set => maxRun([...set], layoutOrder, false));
+       const layoutSpecialRun = rounds.map(set => ['0','1','3','4','5','6'].filter(n => set.has(n)).length);
+       const sequenceRate = runs => runs.filter(n => n >= 5).length / Math.max(rounds.length, 1);
       const consecutiveMatches = rounds.slice(1).filter((set, i) => { const previous = rounds[i]; return previous.size && [...set].filter(n => previous.has(n)).length / Math.max(set.size, previous.size) >= .7; }).length;
       const repeatRate = consecutiveMatches / Math.max(rounds.length - 1, 1);
        const uniqueRate = new Set(allPositions).size / Math.max(rows.totalPositions || allPositions.length, 1);
-      const sectorCount = new Set(allNumbers.map(n => wheelOrder.indexOf(n) < 13 ? 'sector-a' : wheelOrder.indexOf(n) < 26 ? 'sector-b' : 'sector-c')).size;
+       const sectors = {
+         'Tiers du Cylindre': ['27','33','36','30','23','8','10','5','24','16','13','11'],
+         'Orphelins': ['1','6','9','14','17','20','31','34'],
+         'Voisins du Zéro': ['22','18','29','7','28','12','35','3','26','0','32','15','19','4','21','2','25'],
+         'Jeu Zéro': ['12','35','3','26','0','32','15']
+       };
+       const sectorMatches = rounds.map(set => Object.entries(sectors)
+         .map(([name, numbers]) => ({ name, count: numbers.filter(n => set.has(n)).length, total: numbers.length }))
+         .filter(item => item.count >= Math.min(5, item.total)));
+       const matchedSectorNames = [...new Set(sectorMatches.flatMap(items => items.map(item => item.name)))];
       const answers = {};
       answers.wheelSequential = sequenceRate(wheelRuns) >= .5 ? 'In many sequential games' : sequenceRate(wheelRuns) > 0 ? 'From time to time' : rounds.length <= 1 ? 'Only one game round held' : 'No';
-      answers.layoutSequential = sequenceRate(layoutRuns) >= .5 ? 'In many sequential games' : sequenceRate(layoutRuns) > 0 ? 'From time to time' : rounds.length <= 1 ? 'Only one game round held' : 'No';
-      answers.sectors = sectorCount >= 2 ? 'Yes' : 'No';
-      answers.random = uniqueRate >= .75 && !sequenceRate(wheelRuns) && !sequenceRate(layoutRuns) ? 'No, placing bets chaotically' : 'No';
+       const layoutSequentialRate = rounds.filter((set, i) => layoutRuns[i] >= 5 || layoutSpecialRun[i] >= 5).length / Math.max(rounds.length, 1);
+       const multiSectorRound = sectorMatches.some(items => items.length >= 2);
+       answers.layoutSequential = layoutSequentialRate >= .5 ? 'In many sequential games' : layoutSequentialRate > 0 ? 'From time to time' : rounds.length <= 1 ? 'Only one game round held' : 'No';
+       answers.sectors = multiSectorRound ? 'Yes — ' + matchedSectorNames.join(', ') : 'No';
+       answers.random = uniqueRate >= .75 && !sequenceRate(wheelRuns) && !sequenceRate(layoutRuns) && matchedSectorNames.length === 0 ? 'No, placing bets chaotically' : 'No';
       answers.repeatRounds = rounds.length <= 1 ? 'Only one game round held' : answerFrequency(repeatRate, 'Frequently', 'Never');
       answers.repeatTables = 'Other one';
       answers.betChoice = uniqueRate >= .75 ? 'When it comes to the bet variation, the player varied the choice of the bet spots chaotically' : 'When it comes to the bet variation, the player mostly repeated the choice of the bet spots';
