@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.14",
+   version: "2.6.15",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -552,13 +552,22 @@ function detectColumns(sumdata) {
     // only accept a contiguous run of four numeric columns. This prevents a
     // trailing set of numeric helper columns from being selected.
     const moneyRuns = [];
-    for (let start = 3; start <= columnCount - 4; start++) {
-       if (Array.from({ length: 4 }, (_, offset) => isNumeric(start + offset)).every(Boolean)) {
-          const previousValues = sampleRows.map(row => getCellText(row[start - 1])).filter(Boolean);
+    for (let start = 3; start < columnCount;) {
+       if (!isNumeric(start)) { start++; continue; }
+       let end = start;
+       while (end + 1 < columnCount && isNumeric(end + 1)) end++;
+       const runLength = end - start + 1;
+       if (runLength >= 4) {
+          // If a numeric helper directly precedes the money block (for
+          // example Title NET at index 5), use the last four columns of the
+          // contiguous run: 6..9, not 5..8.
+          const moneyStart = end - 3;
+          const previousValues = sampleRows.map(row => getCellText(row[moneyStart - 1])).filter(Boolean);
           const previousLooksLikeCurrency = previousValues.length > 0 &&
              previousValues.filter(value => /^[A-Z]{3}$/.test(value)).length / previousValues.length >= .6;
-          moneyRuns.push({ start, preferred: previousLooksLikeCurrency });
+          moneyRuns.push({ start: moneyStart, preferred: previousLooksLikeCurrency });
        }
+       start = end + 1;
     }
     const preferredRun = moneyRuns.find(run => run.preferred) || moneyRuns[0];
     const moneyColumns = preferredRun ? [0, 1, 2, 3].map(offset => preferredRun.start + offset) : [];
