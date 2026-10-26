@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.13",
+   version: "2.6.14",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -55,6 +55,13 @@ const COL_STEP = 76.5;                        // ширина колонки (д
 const colOf = n => Math.ceil(n / 3);
 const rowYOf = n => ROW_Y[n % 3];
 const boundaryX = col => COL_X[col - 1] + COL_STEP / 2;   // граница между колонкой col и col+1
+
+function normalizeWinningValue(value) {
+   const text = String(value ?? "").trim().replace(/\s/g, "");
+   if (text === "00") return "00";
+   const number = Number(text.replace(",", "."));
+   return Number.isInteger(number) && number >= 0 && number <= 36 ? String(number) : null;
+}
 
 /* ------------------------------------------------------------ */
 /* ОПИСАНИЕ КОЛЁС                                                */
@@ -532,10 +539,10 @@ function detectColumns(sumdata) {
       if (!values.length) return 0;
       return values.filter(cell => Number.isFinite(parseDisplayedAmount(cell))).length / values.length;
    };
-   const rouletteRate = index => {
-      const values = sampleRows.map(row => getCellText(row[index])).filter(Boolean);
-      if (!values.length) return 0;
-      return values.filter(value => /^(?:00|[0-9]|[1-2][0-9]|3[0-6])$/.test(value)).length / values.length;
+    const rouletteRate = index => {
+       const values = sampleRows.map(row => getCellText(row[index])).filter(Boolean);
+       if (!values.length) return 0;
+       return values.filter(value => normalizeWinningValue(value) !== null).length / values.length;
    };
     const isNumeric = index => index >= 3 && numericRate(index) >= .6;
     const numericColumns = Array.from({ length: columnCount }, (_, index) => index).filter(isNumeric);
@@ -753,10 +760,12 @@ function render(sumdata) {
     const hasWinColumn = cols.WinningNumber !== null && worksheetData[0] && cols.WinningNumber < worksheetData[0].length;
     const winIdx = (singleRound && hasWinColumn) ? cols.WinningNumber : null;
     const winnerToggle = document.getElementById("winnerToggle");
-    $(".winner-setting").toggle(!!hasWinColumn);
+    // Keep the control visible for a stable Tableau UI. It is disabled when
+    // the source has no winning-number field or when several rounds are shown.
+    $(".winner-setting").show();
     if (winnerToggle) {
-       winnerToggle.disabled = !singleRound;
-       state.showWinner = singleRound && winnerToggle.checked;
+       winnerToggle.disabled = !singleRound || !hasWinColumn;
+       state.showWinner = singleRound && hasWinColumn && winnerToggle.checked;
     }
 
    let lastWinner = null;
@@ -793,7 +802,8 @@ function render(sumdata) {
       /* выигрышный номер (если колонка есть) */
       if (winIdx !== null) {
           const wv = getCellText(row[winIdx]);
-         if (/^(\d{1,2}|00)$/.test(wv)) lastWinner = wv;
+          const winningValue = normalizeWinningValue(wv);
+          if (winningValue !== null) lastWinner = winningValue;
       }
 
       /* перерывы */
