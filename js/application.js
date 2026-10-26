@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.22",
+   version: "2.6.23",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1131,6 +1131,8 @@ function changeToImg() {
     const isLayout = exampleSwitch ? exampleSwitch.checked : !$(".container-2").hasClass("hide");
     if (exampleSwitch && window.setViewMode) window.setViewMode(isLayout);
     const toImgArea = document.getElementById(isLayout ? "imgItcontainerem2" : "imgItcontainerem");
+    const sourceCrown = toImgArea ? toImgArea.querySelector(".wheel-winner-crown") : null;
+    const exportAngle = sourceCrown ? Number(sourceCrown.dataset.angle) : NaN;
 
     html2canvas(toImgArea, {
       allowTaint: true,
@@ -1182,9 +1184,9 @@ function changeToImg() {
                 layoutCanvas.style.marginLeft = "auto";
                 layoutCanvas.style.marginRight = "auto";
              }
-          } else {
-             const wheel = clonedArea.querySelector(".roulette-container");
-              if (wheel) {
+           } else {
+              const wheel = clonedArea.querySelector(".roulette-container");
+               if (wheel) {
                 wheel.style.display = "flex";
                 wheel.style.alignItems = "center";
                 wheel.style.justifyContent = "center";
@@ -1193,16 +1195,22 @@ function changeToImg() {
                  wheel.style.setProperty("margin-left", "auto", "important");
                  wheel.style.setProperty("margin-right", "auto", "important");
                  wheel.style.setProperty("margin-top", "44px", "important");
-                 const exportCanvas = wheel.querySelector("#myChart");
-                 const exportCrown = wheel.querySelector(".wheel-winner-crown");
-                 if (exportCanvas && exportCrown) {
-                    const exportSize = Math.min(exportCanvas.clientWidth, exportCanvas.clientHeight);
-                    const exportAngle = Number(exportCrown.dataset.angle);
-                    exportCrown.style.left = (exportSize / 2 + Math.cos(exportAngle) * exportSize * .56) + "px";
-                    exportCrown.style.top = (exportSize / 2 + Math.sin(exportAngle) * exportSize * .56) + "px";
-                 }
-              }
-          }
+                  const exportCanvas = wheel.querySelector("#myChart");
+                  const exportCrown = wheel.querySelector(".wheel-winner-crown");
+                  // SVG overlays are unreliable in html2canvas. Save the
+                  // Wheel geometry and remove the overlay; the crown is
+                  // rasterized onto the final export below.
+                  if (exportCrown) exportCrown.remove();
+                  if (exportCanvas && exportCrown) {
+                     const exportSize = Math.min(exportCanvas.clientWidth, exportCanvas.clientHeight);
+                     const areaRect = clonedArea.getBoundingClientRect();
+                     const wheelRect = wheel.getBoundingClientRect();
+                     clonedArea.dataset.exportWheelX = String(wheelRect.left - areaRect.left);
+                     clonedArea.dataset.exportWheelY = String(wheelRect.top - areaRect.top);
+                     clonedArea.dataset.exportWheelSize = String(exportSize);
+                  }
+               }
+           }
       }
     }).then(function (canvas) {
        // Crop transparent margins so each example contains only its actual
@@ -1237,6 +1245,39 @@ function changeToImg() {
           croppedContext.drawImage(canvas, left, top, contentWidth, contentHeight,
              Math.round((cropped.width - contentWidth) / 2), 0, contentWidth, contentHeight);
           canvas = cropped;
+       }
+       if (!isLayout && Number.isFinite(exportAngle)) {
+          // The export is rendered at scale 2 and the Wheel is centered in a
+          // fixed 500px export area. Draw the marker in canvas pixels so it
+          // cannot drift when the example is resized in the examples grid.
+          const scale = 2;
+          const wheelSize = 470 * scale;
+          const centerX = canvas.width / 2;
+          const centerY = (10 + 26 + 10 + 44 + 235) * scale;
+          const radius = wheelSize * .56;
+          const crownX = centerX + Math.cos(exportAngle) * radius;
+          const crownY = centerY + Math.sin(exportAngle) * radius;
+          const context = canvas.getContext("2d");
+          context.save();
+          context.translate(crownX, crownY);
+          context.rotate(exportAngle + Math.PI / 2);
+          context.strokeStyle = "#00B28F";
+          context.lineWidth = 1.7 * scale;
+          context.lineJoin = "round";
+          context.lineCap = "round";
+          context.beginPath();
+          context.moveTo(-12 * scale, -6 * scale);
+          context.lineTo(-7 * scale, 0);
+          context.lineTo(0, -8 * scale);
+          context.lineTo(7 * scale, 0);
+          context.lineTo(12 * scale, -6 * scale);
+          context.lineTo(9 * scale, 9 * scale);
+          context.lineTo(-9 * scale, 9 * scale);
+          context.closePath();
+          context.moveTo(-9 * scale, 9 * scale);
+          context.lineTo(9 * scale, 9 * scale);
+          context.stroke();
+          context.restore();
        }
        const sreenshot = document.getElementById("sreenshot");
       canvas.classList.add(isLayout ? "example-layout" : "example-wheel");
