@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.0.7",
+   version: "2.0.8",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -532,7 +532,7 @@ function render(sumdata) {
       const row = worksheetData[i];
       const pos = getCellText(row[cols.BetPosition]);
       const amountCell = row[betIdx];
-      const amount = Number(amountCell && amountCell.value !== undefined ? amountCell.value : getCellText(amountCell));
+      const amount = parseDisplayedAmount(amountCell);
 
       /* радар: считаем только STRAIGHT_UP и SPLIT (как в оригинале) */
       betNumbers(pos).forEach(n => {
@@ -609,6 +609,28 @@ function getCellText(cell) {
       ? cell.formattedValue
       : (cell.value !== undefined && cell.value !== null ? cell.value : cell.nativeValue);
    return value === undefined || value === null ? "" : String(value).trim();
+}
+
+function parseDisplayedAmount(cell) {
+   const displayed = getCellText(cell);
+   if (displayed) {
+      let text = displayed.replace(/[^\d,.-]/g, "");
+      const comma = text.lastIndexOf(",");
+      const dot = text.lastIndexOf(".");
+      if (comma !== -1 && dot !== -1) {
+         // The last separator is the decimal mark; remove earlier grouping marks.
+         if (comma > dot) text = text.replace(/\./g, "").replace(",", ".");
+         else text = text.replace(/,/g, "");
+      } else if (comma !== -1) {
+         const decimals = text.length - comma - 1;
+         text = decimals > 0 && decimals <= 2 ? text.replace(",", ".") : text.replace(/,/g, "");
+      }
+      const parsed = Number(text);
+      if (Number.isFinite(parsed)) return parsed;
+   }
+
+   const raw = cell && cell.value !== undefined ? Number(cell.value) : NaN;
+   return Number.isFinite(raw) ? raw : NaN;
 }
 
 /* Разница во времени между раундами */
