@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.24",
+   version: "2.6.25",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1153,7 +1153,7 @@ function changeToImg() {
           clonedArea.style.borderRadius = "0";
           clonedArea.style.boxShadow = "none";
            clonedArea.style.background = "#ffffff";
-          clonedArea.style.setProperty("width", isLayout ? "1000px" : "500px", "important");
+           clonedArea.style.setProperty("width", isLayout ? "1000px" : "540px", "important");
           clonedArea.style.setProperty("min-width", "0", "important");
           clonedArea.style.setProperty("max-width", "none", "important");
           clonedArea.style.boxSizing = "border-box";
@@ -1235,7 +1235,7 @@ function changeToImg() {
           const bottom = Math.min(canvas.height, maxY + padding + 1);
           const contentWidth = right - left;
           const contentHeight = bottom - top;
-          const targetWidth = (isLayout ? 1000 : 500) * 2;
+           const targetWidth = (isLayout ? 1000 : 540) * 2;
           const cropped = document.createElement("canvas");
           cropped.width = Math.max(targetWidth, contentWidth);
           cropped.height = contentHeight;
