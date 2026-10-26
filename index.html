@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Roulette Spread — объединённая версия</title>
+  <title>Roulette Spread — Unified</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="style/style.css">
 </head>
@@ -15,27 +15,27 @@
       <span>ROULETTE LAYOUT</span>
     </div>
     <div class="toolbar-meta">
-      <span>КОЛЕСО: <b class="wheel-label">EUROPEAN</b></span>
-      <span>ВАЛЮТА: <b class="cur-label">EUR</b></span>
-      <span>ВЕРСИЯ 2.0.0</span>
+      <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
+      <span>CURRENCY: <b class="cur-label">EUR</b></span>
+      <span>VERSION 2.0.0</span>
     </div>
   </header>
 
-  <nav class="settings" aria-label="Настройки примера">
-    <label>Колесо
+  <nav class="settings" aria-label="Demo settings">
+    <label>Wheel
       <select id="wheelSelect" class="form-select form-select-sm">
-        <option value="EUROPEAN">Европейское (0–36)</option>
-        <option value="AMERICAN">Американское (0, 00–36)</option>
+        <option value="EUROPEAN">European (0–36)</option>
+        <option value="AMERICAN">American (0, 00–36)</option>
       </select>
     </label>
-    <label>Валюта
+    <label>Currency
       <select id="currencySelect" class="form-select form-select-sm">
         <option value="EUR">EUR</option>
         <option value="NATIVE">Native</option>
       </select>
     </label>
     <label class="check-setting"><input id="winnerToggle" type="checkbox" checked> Winning number</label>
-    <span class="demo-hint">Для проверки: добавь к адресу <code>?demo=win</code> (с выигрышным номером) или <code>?demo=missing</code> (без колонки).</span>
+    <span class="demo-hint">Demo: use <code>?demo=win</code> to include a winning number or <code>?demo=missing</code> to omit the column.</span>
   </nav>
 
   <main>
