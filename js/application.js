@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.7",
+   version: "2.6.8",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -234,6 +234,7 @@ let unregisterMarkSelectionEventListener = null;
 let unregisterSettingsEventListener = null;
 let currencyIndexCache = null;   // пересчитывается при каждом drawChartJS
 let layoutHoverCounts = new Map();
+let layoutHoverTargets = [];
 
 function setupLayoutHover() {
    const canvas = document.getElementById("RouletteLayout");
@@ -245,20 +246,11 @@ function setupLayoutHover() {
       const rect = canvas.getBoundingClientRect();
       const x = (event.clientX - rect.left) * 1143 / rect.width;
       const y = (event.clientY - rect.top) * 480 / rect.height;
-      let number = null;
-      if (x < 140 && y >= 35 && y <= 300) number = "0";
-      else if (x >= 102 && x <= 1060 && y >= 35 && y <= 300) {
-         const column = Math.floor((x - 102) / COL_STEP) + 1;
-         const row = Math.round((y - 55) / 100);
-         if (column >= 1 && column <= 12 && [0, 1, 2].includes(row)) {
-            const value = (column - 1) * 3 + (row === 0 ? 3 : row === 1 ? 1 : 2);
-            if (value >= 1 && value <= 36) number = String(value);
-         }
-      }
-      const count = number === null ? 0 : (layoutHoverCounts.get(number) || 0);
-      if (!count) { tooltip.style.display = "none"; return; }
+      const target = layoutHoverTargets.find(item => Math.hypot(x - item.x, y - item.y) <= 34);
+      if (!target) { tooltip.style.display = "none"; return; }
       const wrapperRect = wrapper.getBoundingClientRect();
-      tooltip.textContent = "Number: " + number + " · Placed: " + count + (count === 1 ? " time" : " times");
+      const count = target.count;
+      tooltip.textContent = "Bet: " + target.position + " · Placed: " + count + (count === 1 ? " time" : " times") + " · Stake: " + formatAmount(target.amount);
       tooltip.style.left = (event.clientX - wrapperRect.left + 12) + "px";
       tooltip.style.top = (event.clientY - wrapperRect.top + 12) + "px";
       tooltip.style.display = "block";
@@ -724,18 +716,22 @@ function render(sumdata) {
       });
 
       layoutHoverCounts = new Map();
+      layoutHoverTargets = [];
       positionCounts.forEach((count, pos) => {
          betNumbers(pos).forEach(number => {
             layoutHoverCounts.set(number, (layoutHoverCounts.get(number) || 0) + count);
          });
       });
 
-    chipAmounts.forEach((amount, pos) => {
-       const chipXY = (OUTSIDE[pos] !== undefined)
-          ? OUTSIDE[pos]
-          : insidePos(pos) || straightPos(pos.startsWith("STRAIGHT_UP_") ? pos.slice(12) : pos);
-       if (chipXY) drawBetChip(context, chipXY[0], chipXY[1], amount, state.showChipValues);
-    });
+      chipAmounts.forEach((amount, pos) => {
+         const chipXY = (OUTSIDE[pos] !== undefined)
+           ? OUTSIDE[pos]
+           : insidePos(pos) || straightPos(pos.startsWith("STRAIGHT_UP_") ? pos.slice(12) : pos);
+        if (chipXY) {
+           drawBetChip(context, chipXY[0], chipXY[1], amount, state.showChipValues);
+           layoutHoverTargets.push({ x: chipXY[0] + 17, y: chipXY[1] + 12, position: pos, count: positionCounts.get(pos) || 0, amount });
+        }
+      });
 
     /* --- фишка выигрышного номера (последний розыгрыш) --- */
    if (state.showWinner && winIdx !== null && lastWinner !== null) {
