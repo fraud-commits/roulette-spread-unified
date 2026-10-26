@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.1.2",
+   version: "2.1.3",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -749,12 +749,8 @@ function getTimestampedFilename(baseName, extension) {
 }
 
 function changeToImg() {
-   let toImgArea;
-   if ($(".container-2").hasClass("hide")) {
-      toImgArea = document.getElementById("imgItcontainerem");
-   } else {
-      toImgArea = document.getElementById("imgItcontainerem2");
-   }
+   const isLayout = !$(".container-2").hasClass("hide");
+   const toImgArea = document.getElementById(isLayout ? "imgItcontainerem2" : "imgItcontainerem");
 
    window.pageYOffset = 0;
    document.documentElement.scrollTop = 0;
@@ -764,10 +760,39 @@ function changeToImg() {
       allowTaint: true,
       taintTest: false,
       type: "view",
-      dpi: 144
+      dpi: 144,
+      onclone: function (clonedDocument) {
+         const clonedArea = clonedDocument.getElementById(toImgArea.id);
+         if (!clonedArea) return;
+
+         clonedArea.style.minHeight = "0";
+         clonedArea.style.height = "auto";
+         clonedArea.style.margin = "0";
+         clonedArea.style.padding = "10px";
+         clonedArea.style.width = isLayout ? "1000px" : "500px";
+         clonedArea.style.maxWidth = "none";
+
+         const title = clonedArea.querySelector(".idround");
+         if (title) {
+            title.style.margin = "0 0 10px";
+            title.style.height = "auto";
+            title.style.fontSize = isLayout ? "26px" : "22px";
+         }
+
+         if (isLayout) {
+            const wrapper = clonedArea.querySelector(".layout-container");
+            const layoutCanvas = clonedArea.querySelector("#RouletteLayout");
+            if (wrapper) { wrapper.style.width = "1000px"; wrapper.style.overflow = "visible"; }
+            if (layoutCanvas) { layoutCanvas.style.width = "1000px"; layoutCanvas.style.height = "auto"; }
+         } else {
+            const wheel = clonedArea.querySelector(".roulette-container");
+            if (wheel) { wheel.style.width = "470px"; wheel.style.height = "470px"; }
+         }
+      }
    }).then(function (canvas) {
       const sreenshot = document.getElementById("sreenshot");
-      canvas.style.width = Math.min(canvas.width, 1000) + "px";
+      canvas.classList.add(isLayout ? "example-layout" : "example-wheel");
+      canvas.style.width = "100%";
       canvas.style.height = "auto";
       canvas.style.maxWidth = "100%";
       sreenshot.appendChild(canvas);

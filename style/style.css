@@ -25,11 +25,14 @@ body { margin: 0; color: #25292d; font-family: Arial, sans-serif; overflow-x: hi
 .examples { min-height: 180px; padding: 14px 24px; }
 .control-btn { display: flex; gap: 6px; margin-bottom: 12px; }
 #download { color: white; text-decoration: none; }
-.sreenshot { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; overflow: auto; }
-.sreenshot canvas { display: block; width: auto; height: auto !important; max-width: 100%; border: 1px solid #ddd; object-fit: contain; }
+.sreenshot { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; gap: 12px; width: 100%; overflow: visible; }
+.sreenshot canvas { display: block; width: 100% !important; height: auto !important; max-width: 100%; border: 0; outline: 0; box-shadow: none; object-fit: contain; }
+.sreenshot canvas.example-layout { grid-column: span 2; }
 @media (max-width: 700px) {
   .toolbar { align-items: flex-start; flex-direction: column; gap: 10px; }
   .toolbar-meta { flex-wrap: wrap; gap: 10px; }
   .roulette-container { width: min(92vw, 470px); height: min(92vw, 470px); }
   .view-container { min-height: 520px; }
+  .sreenshot { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sreenshot canvas.example-layout { grid-column: span 2; }
 }
