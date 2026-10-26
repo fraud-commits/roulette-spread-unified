@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.1.0",
+   version: "2.1.1",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -640,11 +640,10 @@ function breakDelta(startStr, endStr) {
     const start = moment(startStr, formats, true);
     const end = moment(endStr, formats, true);
    if (!start.isValid() || !end.isValid()) return { kind: "seq" };
-   const minutes = end.diff(start, "minutes");
-   const hours = Math.floor(minutes / 60);
-   if (hours === 0 && minutes > 2 && minutes <= 10) return { kind: "skip" };
-   if (hours === 0 && minutes > 10 && minutes <= 30) return { kind: "short" };
-   if (hours >= 1 || minutes > 30) return { kind: "long" };
+   const gapMinutes = end.diff(start, "seconds") / 60;
+   if (gapMinutes >= 3 && gapMinutes <= 10) return { kind: "skip" };
+   if (gapMinutes > 10 && gapMinutes <= 30) return { kind: "short" };
+   if (gapMinutes > 30) return { kind: "long" };
    return { kind: "seq" };
 }
 
