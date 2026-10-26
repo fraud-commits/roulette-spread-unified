@@ -80,6 +80,8 @@ main { min-height: calc(100vh - 124px); }
 .example-view-switch .switch { transform: scale(.82); transform-origin: center; }
 .example-view-switch .slider { border-color: #BFD5CC; background: #E8F1EE; }
 .example-view-switch .slider:before { background: var(--lfs-green); }
+.example-view-switch .switch input:checked + .slider { border-color: #BFD5CC; background: #E8F1EE; }
+.example-view-switch .switch input:checked + .slider:before { background: var(--lfs-green); }
 .control-btn .btn { min-height: 36px; padding: 7px 14px; border: 1px solid var(--lfs-border); border-radius: 8px; color: var(--lfs-text); background: #fff; font-size: 13px; font-weight: 600; transition: all .15s ease; }
 .control-btn .btn:hover { border-color: var(--lfs-green); color: var(--lfs-green); background: var(--lfs-mint); }
 .control-btn .btn:first-child { border-color: var(--lfs-green); color: #fff; background: var(--lfs-green); }
