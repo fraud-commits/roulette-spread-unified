@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.5.2",
+   version: "2.5.3",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -860,7 +860,16 @@ function drawRadar(labels, data) {
          },
          plugins: {
             legend: { display: false },
-            tooltip: { enabled: false }
+             tooltip: {
+                enabled: true,
+                callbacks: {
+                   title: items => items.length ? "Number: " + labels[items[0].dataIndex] : "",
+                   label: item => {
+                      const count = Number(item.raw) || 0;
+                      return "Placed: " + count + (count === 1 ? " time" : " times");
+                   }
+                }
+             }
          },
          scale: {
             maintainAspectRaito: false,
