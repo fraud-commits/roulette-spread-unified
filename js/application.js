@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.2.2",
+   version: "2.2.3",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -577,8 +577,11 @@ function render(sumdata) {
 
    /* --- заголовок --- */
     $(".idround").text(makeTitle(worksheetData, RoundID, RoundTime));
+    if (typeof updateReportHelper === "function") updateReportHelper(worksheetData, cols);
+    else window.pendingReportData = { rows: worksheetData, cols: cols };
+    window.__rouletteReportData = { rows: worksheetData, cols: cols };
 
-   drawRadar(order, data);
+    drawRadar(order, data);
 }
 
 /* Переключатель колеса удерживается пользователем? */

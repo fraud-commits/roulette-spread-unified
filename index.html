@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roulette Spread — Unified</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style/style.css?v=2.2.2">
+  <link rel="stylesheet" href="style/style.css?v=2.2.3">
 </head>
 <body>
   <header class="toolbar">
@@ -24,7 +24,7 @@
       </div>
       <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
       <span>CURRENCY: <b class="cur-label">EUR</b></span>
-      <span>VERSION <b class="version-label">2.2.2</b></span>
+      <span>VERSION <b class="version-label">2.2.3</b></span>
     </div>
   </header>
 
@@ -64,9 +64,9 @@
         <option value="video">Video records for most successful rounds checked?</option>
         <option value="deviation">Roulette standard deviation</option>
       </select>
-      <div id="reportAnswer" class="report-answer" aria-live="polite">Select a topic to see the manual guidance and a report-ready wording template.</div>
+      <div id="reportAnswer" class="report-answer" aria-live="polite">Choose a question to analyse the current Tableau data and generate a report-ready answer.</div>
       <button id="copyReportAnswer" class="btn btn-outline-secondary btn-sm" type="button" disabled>Copy wording</button>
-      <small>Templates are prompts, not automatic findings. Confirm each statement against the session data and reviewed footage.</small>
+      <small>Answers are calculated from the current Tableau worksheet. Video review, linked-account checks and Roulette SD require separate sources.</small>
     </div>
   </details>
 
@@ -102,7 +102,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="js/application.js?v=2.2.2"></script>
+  <script src="js/application.js?v=2.2.3"></script>
   <script>
     document.getElementById('wheelSelect').addEventListener('change', function () {
       CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
@@ -120,30 +120,36 @@
       state.showChipValues = this.checked;
       if (state.tableauReady || DEMO !== null) drawChartJS();
     });
-    const reportAnswers = {
-      continuity: "Manual guidance: assess whether betting continued consistently across the observed session.\n\nReport wording: Bet continuity: [continuous / intermittent]. The player placed bets across [X of Y] observed rounds, with [brief description of any gaps].",
-      breaks: "Manual guidance: Few = up to 2; Several = 3–5; Many = 6+. For the on-screen gap counters, this extension classifies 3–10 minutes as a skip, over 10–30 minutes as a short break, and over 30 minutes as a long break.\n\nReport wording: Breaks during analysis: [none / few / several / many]. Observed [X] skips, [Y] short breaks, and [Z] long breaks.",
-      wheelSequential: "Manual guidance: wheel-sequential coverage means bets on at least five consecutive pockets in the physical wheel order—not numeric order. Racetrack sectors (Tiers, Orphelins, Voisins du Zéro, and Jeu Zéro) should be identified by name when applicable.\n\nReport wording: Wheel-sequential coverage: [observed / not observed]. The covered wheel numbers were [numbers in wheel order] ([count] numbers). [If applicable: The pattern corresponds to the [sector] sector.]",
-      layoutSequential: "Manual guidance: layout-sequential coverage means bets on at least five consecutive numbers on the betting layout (for example, 31–35). This is distinct from physical wheel order.\n\nReport wording: Layout-sequential coverage: [observed / not observed]. The covered layout numbers were [numbers] over [rounds/examples].",
-      sectors: "Manual guidance: note when bets cover multiple wheel sectors at the same time; distinguish sector-based patterns from layout patterns.\n\nReport wording: Multiple wheel sectors: [observed / not observed]. Bets covered [sector(s)/numbers] [simultaneously / across the session].",
-      random: "Manual guidance: use this when selected numbers appear distributed without a clear wheel-sector or layout sequence. Avoid calling a pattern random without reviewing enough rounds.\n\nReport wording: Randomly allocated numbers: [observed / not observed] in the reviewed sample of [X] rounds. Examples: [numbers/rounds].",
-      repeatRounds: "Manual guidance: assess whether the player repeats the same bet positions from one round to the next.\n\nReport wording: Repeated bets between rounds: [observed / not observed]. The same positions [positions] recurred in [X] consecutive / [X of Y] reviewed rounds.",
-      repeatTables: "Manual guidance: compare bet positions across roulette tables, if data for multiple tables is available.\n\nReport wording: Repeated bets across tables: [observed / not observed]. The pattern [positions/pattern] appeared on [table(s)] during [period].",
-      betChoice: "Manual guidance: state whether the player mostly varied bet positions or repeated them. Support the assessment with reviewed rounds.\n\nReport wording: Bet choice: The player [mostly varied / frequently repeated] bet positions. [Add concise evidence, such as X repeated positions across Y rounds.]",
-      opposite: "Manual guidance: assess whether activity suggests coordinated opposing bets with another account; this requires evidence beyond a single player's spread.\n\nReport wording: Signs of opposite betting: [observed / not observed]. [Summarize matched opposing positions, linked account(s), round count, and wager/turnover share, if verified.]",
-      video: "Manual guidance: confirm whether Risk Analysts reviewed footage for the most successful rounds and record the result.\n\nReport wording: Video review: Footage for [X] of the most successful rounds was reviewed. [Summarize relevant observations / No irregularities or procedural issues were identified.]",
-      deviation: "Manual guidance: the manual says Roulette Standard Deviation requires Team Configuration setting ReportRouletteDeviationComment = 1. A normal-range result alone does not establish a betting strategy.\n\nReport wording: Roulette standard deviation: [checked / not checked]. [Summarize the report result and any predominant numbers/sectors, if present.]"
-    };
     const reportQuestion = document.getElementById('reportQuestion');
     const reportAnswer = document.getElementById('reportAnswer');
     const copyReportAnswer = document.getElementById('copyReportAnswer');
+    let calculatedReportAnswers = {};
+    let reportData = null;
+    window.updateReportHelper = function (rows, cols) {
+      reportData = { rows: rows, cols: cols };
+      try {
+        calculatedReportAnswers = calculateReportAnswers(rows, cols);
+      } catch (error) {
+        console.warn('Report helper could not analyse the worksheet:', error);
+        calculatedReportAnswers = { wheelSequential: 'Other one', layoutSequential: 'Other one', sectors: 'Other one', random: 'Other one', repeatRounds: 'Other one', repeatTables: 'Other one', betChoice: 'Other one' };
+      }
+      reportAnswer.textContent = calculatedReportAnswers[reportQuestion.value] || 'Choose a question to analyse the current Tableau data and generate a report-ready answer.';
+      copyReportAnswer.disabled = !reportQuestion.value || !calculatedReportAnswers[reportQuestion.value];
+    };
+    if (window.pendingReportData) updateReportHelper(window.pendingReportData.rows, window.pendingReportData.cols);
     reportQuestion.addEventListener('change', function () {
-      reportAnswer.textContent = reportAnswers[this.value] || 'Select a topic to see the manual guidance and a report-ready wording template.';
-      copyReportAnswer.disabled = !reportAnswers[this.value];
+      try {
+        if (!reportData && window.__rouletteReportData) reportData = window.__rouletteReportData;
+        if (reportData) calculatedReportAnswers = calculateReportAnswers(reportData.rows, reportData.cols);
+      } catch (error) {
+        calculatedReportAnswers = { wheelSequential: 'Other one', layoutSequential: 'Other one', sectors: 'Other one', random: 'Other one', repeatRounds: 'Other one', repeatTables: 'Other one', betChoice: 'Other one' };
+      }
+      reportAnswer.textContent = calculatedReportAnswers[this.value] || 'Choose a question to analyse the current Tableau data and generate a report-ready answer.';
+      copyReportAnswer.disabled = !calculatedReportAnswers[this.value];
     });
     copyReportAnswer.addEventListener('click', async function () {
       try {
-        await navigator.clipboard.writeText(reportAnswers[reportQuestion.value]);
+        await navigator.clipboard.writeText(reportAnswer.textContent);
         this.textContent = 'Copied';
         setTimeout(() => { this.textContent = 'Copy wording'; }, 1400);
       } catch (error) {
@@ -155,6 +161,63 @@
         this.textContent = 'Select and copy';
       }
     });
+
+    function reportCell(row, index) {
+      if (index === null || index === undefined) return '';
+      const cell = row[index];
+      return cell && (cell.formattedValue ?? cell.value ?? cell.nativeValue) != null
+        ? String(cell.formattedValue ?? cell.value ?? cell.nativeValue).trim() : '';
+    }
+    function reportNumbers(position) {
+      const values = [];
+      const re = /(?:STRAIGHT_UP_|SPLIT_|STREET_|CORNER_|SIX_LINE_|TRIO_|BASKET_|FIRST_FOUR|COLUMN_|FIRST_12|SECOND_12|THIRD_12|FIRST_HALF|SECOND_HALF|EVEN|RED|BLACK|ODD)(.*)/;
+      if (/STRAIGHT_UP_/.test(position)) return [position.split('STRAIGHT_UP_')[1]];
+      const matches = position.match(/(?:^|_)(00|\d{1,2})(?=_|$)/g) || [];
+      matches.forEach(value => values.push(value.replace(/^_/, '')));
+      return values;
+    }
+    function maxRun(values, order) {
+      const set = new Set(values), indexes = values.map(v => order.indexOf(v)).filter(i => i >= 0);
+      if (!indexes.length) return 0;
+      let best = 1;
+      indexes.forEach(start => { let run = 1; while (set.has(order[(start + run) % order.length])) run++; best = Math.max(best, Math.min(run, order.length)); });
+      return best;
+    }
+    function answerFrequency(rate, yes, no) {
+      if (!rate) return no;
+      if (rate >= .6) return yes;
+      if (rate > 0) return 'From time to time';
+      return no;
+    }
+    function calculateReportAnswers(rows, cols) {
+      const roundMap = new Map();
+      rows.forEach(row => { const id = reportCell(row, cols.RoundID) || 'unknown'; if (!roundMap.has(id)) roundMap.set(id, new Set()); reportNumbers(reportCell(row, cols.BetPosition)).forEach(n => roundMap.get(id).add(n)); });
+      const rounds = Array.from(roundMap.values()).filter(set => set.size);
+      const wheelOrder = (document.getElementById('wheelSelect')?.value === 'AMERICAN' ? ['0','28','9','26','30','11','7','20','32','17','5','22','34','15','3','24','36','13','1','00','27','10','25','29','12','8','19','31','18','6','21','33','16','4','23','35','14','2'] : ['0','32','15','19','4','21','2','25','17','34','6','27','13','36','11','30','8','23','10','5','24','16','33','1','20','14','31','9','22','18','29','7','28','12','35','3','26']);
+      const allNumbers = [...new Set([...roundMap.values()].flatMap(set => [...set]))];
+      const wheelRuns = rounds.map(set => maxRun([...set], wheelOrder));
+      const layoutRuns = rounds.map(set => maxRun([...set].sort((a,b) => Number(a)-Number(b)), [...set].sort((a,b) => Number(a)-Number(b))));
+      const sequenceRate = runs => runs.filter(n => n >= 5).length / Math.max(rounds.length, 1);
+      const consecutiveMatches = rounds.slice(1).filter((set, i) => { const previous = rounds[i]; return previous.size && [...set].filter(n => previous.has(n)).length / Math.max(set.size, previous.size) >= .7; }).length;
+      const repeatRate = consecutiveMatches / Math.max(rounds.length - 1, 1);
+      const allPositions = rows.map(row => reportCell(row, cols.BetPosition)).filter(Boolean);
+      const uniqueRate = new Set(allPositions).size / Math.max(allPositions.length, 1);
+      const sectorCount = new Set(allNumbers.map(n => wheelOrder.indexOf(n) < 13 ? 'sector-a' : wheelOrder.indexOf(n) < 26 ? 'sector-b' : 'sector-c')).size;
+      const answers = {};
+      answers.wheelSequential = sequenceRate(wheelRuns) >= .5 ? 'In many sequential games' : sequenceRate(wheelRuns) > 0 ? 'From time to time' : rounds.length <= 1 ? 'Only one game round held' : 'No';
+      answers.layoutSequential = sequenceRate(layoutRuns) >= .5 ? 'In many sequential games' : sequenceRate(layoutRuns) > 0 ? 'From time to time' : rounds.length <= 1 ? 'Only one game round held' : 'No';
+      answers.sectors = sectorCount >= 2 ? 'Yes' : 'No';
+      answers.random = uniqueRate >= .75 && !sequenceRate(wheelRuns) && !sequenceRate(layoutRuns) ? 'No, placing bets chaotically' : 'No';
+      answers.repeatRounds = rounds.length <= 1 ? 'Only one game round held' : answerFrequency(repeatRate, 'Frequently', 'Never');
+      answers.repeatTables = 'Other one';
+      answers.betChoice = uniqueRate >= .75 ? 'When it comes to the bet variation, the player varied the choice of the bet spots chaotically' : 'When it comes to the bet variation, the player mostly repeated the choice of the bet spots';
+      answers.continuity = rounds.length > 1 ? 'Yes' : 'Only one game round held';
+      answers.breaks = 'Breaks during analysis: ' + (rounds.length > 1 ? 'The session contained ' + rounds.length + ' game rounds.' : 'Only one game round held.');
+      answers.opposite = 'Other one';
+      answers.video = 'Other one';
+      answers.deviation = 'Other one';
+      return answers;
+    }
   </script>
 </body>
 </html>
