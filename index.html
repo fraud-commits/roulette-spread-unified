@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roulette Spread — объединённая версия</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="style/style.css">
+</head>
+<body>
+  <header class="toolbar">
+    <div class="switch-group">
+      <span>BET SPREAD</span>
+      <label class="switch"><input class="mode-switch" type="checkbox"><span class="slider"></span></label>
+      <span>ROULETTE LAYOUT</span>
+    </div>
+    <div class="toolbar-meta">
+      <span>КОЛЕСО: <b class="wheel-label">EUROPEAN</b></span>
+      <span>ВАЛЮТА: <b class="cur-label">EUR</b></span>
+      <span>ВЕРСИЯ 2.0.0</span>
+    </div>
+  </header>
+
+  <nav class="settings" aria-label="Настройки примера">
+    <label>Колесо
+      <select id="wheelSelect" class="form-select form-select-sm">
+        <option value="EUROPEAN">Европейское (0–36)</option>
+        <option value="AMERICAN">Американское (0, 00–36)</option>
+      </select>
+    </label>
+    <label>Валюта
+      <select id="currencySelect" class="form-select form-select-sm">
+        <option value="EUR">EUR</option>
+        <option value="NATIVE">Native</option>
+      </select>
+    </label>
+    <label class="check-setting"><input id="winnerToggle" type="checkbox" checked> Winning number</label>
+    <span class="demo-hint">Для проверки: добавь к адресу <code>?demo=win</code> (с выигрышным номером) или <code>?demo=missing</code> (без колонки).</span>
+  </nav>
+
+  <main>
+    <section class="view-container container" id="imgItcontainerem">
+      <div class="break-counter">
+        <span>SKIPS: <b class="skipcnt">0</b></span>
+        <span>SHORT BREAKS: <b class="shortcnt">0</b></span>
+        <span>LONG BREAKS: <b class="longcnt">0</b></span>
+      </div>
+      <h1 class="idround">Session Straight-Up Bet Spread</h1>
+      <div class="roulette-container"><canvas id="myChart" class="neww"></canvas></div>
+    </section>
+
+    <section class="view-container container-2 hide" id="imgItcontainerem2">
+      <h1 class="idround">Layout Session Spread</h1>
+      <div class="layout-container"><canvas id="RouletteLayout" class="layout"></canvas></div>
+    </section>
+
+    <section class="examples" id="game-examples">
+      <div class="control-btn">
+        <button class="btn btn-dark btn-sm" type="button" onclick="changeToImg()">Add Example</button>
+        <button class="btn btn-dark btn-sm" type="button" onclick="resetTheImageArea()">Restart</button>
+        <button class="btn btn-dark btn-sm" type="button" onclick="changeToImg2()"><a id="download" role="button">Generate</a></button>
+      </div>
+      <div id="sreenshot" class="sreenshot"></div>
+    </section>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.2.1/chart.min.js"></script>
+  <script src="js/tableau-extensions-1.0.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script src="js/application.js"></script>
+  <script>
+    document.getElementById('wheelSelect').addEventListener('change', function () {
+      CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
+      if (state.tableauReady || DEMO !== null) drawChartJS();
+    });
+    document.getElementById('currencySelect').addEventListener('change', function () {
+      state.currency = this.value; updateCurrencyLabels();
+      if (state.tableauReady || DEMO !== null) drawChartJS();
+    });
+    document.getElementById('winnerToggle').addEventListener('change', function () {
+      state.showWinner = this.checked;
+      if (state.tableauReady || DEMO !== null) drawChartJS();
+    });
+  </script>
+</body>
+</html>
