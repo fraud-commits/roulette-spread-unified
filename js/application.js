@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.0.5",
+   version: "2.0.6",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -329,6 +329,7 @@ $(document).ready(function () {
    $(".mode-switch").click(function () {
       $(".container-2").toggleClass("hide");
       $(".container").toggleClass("hide");
+      requestAnimationFrame(fitLayoutCanvas);
    });
 
    $(".mode-switch-2").click(function () {          // Native <-> Euro
@@ -352,7 +353,30 @@ $(document).ready(function () {
 
    updateCurrencyLabels();
    updateWheelLabel();
+   window.addEventListener("resize", fitLayoutCanvas);
+   if (window.ResizeObserver) {
+      const layoutContainer = document.querySelector(".layout-container");
+      if (layoutContainer) new ResizeObserver(fitLayoutCanvas).observe(layoutContainer);
+   }
+   requestAnimationFrame(fitLayoutCanvas);
 });
+
+function fitLayoutCanvas() {
+   const canvas = document.getElementById("RouletteLayout");
+   const wrapper = document.querySelector(".layout-container");
+   const section = document.querySelector(".container-2");
+   if (!canvas || !wrapper || !section || section.classList.contains("hide")) return;
+
+   const widthLimit = wrapper.clientWidth || 1143;
+   const sectionTop = section.getBoundingClientRect().top;
+   const titleHeight = section.querySelector(".idround")?.getBoundingClientRect().height || 70;
+   const controlsHeight = document.querySelector(".examples")?.getBoundingClientRect().height || 120;
+   const heightLimit = Math.max(240, window.innerHeight - sectionTop - titleHeight - controlsHeight - 48);
+   const scale = Math.min(widthLimit / 1143, heightLimit / 480, 1);
+
+   canvas.style.width = Math.floor(1143 * scale) + "px";
+   canvas.style.height = Math.floor(480 * scale) + "px";
+}
 
 /* Слушатели фильтров/марок рабочего листа */
 function getSettings() {
