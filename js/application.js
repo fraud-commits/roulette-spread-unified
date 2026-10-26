@@ -537,22 +537,92 @@ function detectColumns(sumdata) {
       if (!values.length) return 0;
       return values.filter(value => /^(?:00|[0-9]|[1-2][0-9]|3[0-6])$/.test(value)).length / values.length;
    };
-   const numericColumns = Array.from({ length: columnCount }, (_, index) => index)
-      .filter(index => index >= 3 && numericRate(index) >= .6);
-   const moneyColumns = numericColumns.slice(-4);
-   if (moneyColumns.length === 4) {
-      [cols.BetEur, cols.BetNative, cols.NetEur, cols.NetNative] = moneyColumns;
-   }
-   cols.WinningNumber = null;
-   const moneyStart = moneyColumns.length === 4 ? moneyColumns[0] : columnCount;
+    const isNumeric = index => index >= 3 && numericRate(index) >= .6;
+    const numericColumns = Array.from({ length: columnCount }, (_, index) => index).filter(isNumeric);
+
+    // Helpers such as Title NET are numeric too, but they are not a monetary
+    // block. The source worksheet keeps the four amount columns together, so
+    // only accept a contiguous run of four numeric columns. This prevents a
+    // trailing set of numeric helper columns from being selected.
+    const moneyRuns = [];
+    for (let start = 3; start <= columnCount - 4; start++) {
+       if (Array.from({ length: 4 }, (_, offset) => isNumeric(start + offset)).every(Boolean)) {
+          const previousValues = sampleRows.map(row => getCellText(row[start - 1])).filter(Boolean);
+          const previousLooksLikeCurrency = previousValues.length > 0 &&
+             previousValues.filter(value => /^[A-Z]{3}$/.test(value)).length / previousValues.length >= .6;
+          moneyRuns.push({ start, preferred: previousLooksLikeCurrency });
+       }
+    }
+    const preferredRun = moneyRuns.find(run => run.preferred) || moneyRuns[0];
+    const moneyColumns = preferredRun ? [0, 1, 2, 3].map(offset => preferredRun.start + offset) : [];
+    if (moneyColumns.length === 4) {
+       // Prefer explicit field metadata when available. It is used only to
+       // distinguish EUR/native and BET/NET inside the already structural
+       // block; helper fields never enter this block.
+       const moneyNames = moneyColumns.map(index => String(
+          src[index]?.fieldName || src[index]?.fieldCaption || src[index]?.caption || src[index]?.name || ""
+       ).toUpperCase());
+       const findMoney = (kind, currency) => {
+          const index = moneyNames.findIndex(name => name.includes(kind) && name.includes(currency));
+          return index >= 0 ? moneyColumns[index] : null;
+       };
+       const findNativeMoney = kind => {
+          const index = moneyNames.findIndex(name => name.includes(kind) && !name.includes("EUR") && !name.includes("USD"));
+          return index >= 0 ? moneyColumns[index] : null;
+       };
+       const explicit = {
+          BetEur: findMoney("BET", "EUR"),
+          BetNative: findNativeMoney("BET"),
+          NetEur: findMoney("NET", "EUR"),
+          NetNative: findNativeMoney("NET")
+       };
+       if (Object.values(explicit).every(index => index !== null)) {
+          Object.assign(cols, explicit);
+       } else {
+          // Fallback for metadata-free Tableau payloads: the established
+          // four-column order is BET EUR, BET native, NET EUR, NET native.
+          [cols.BetEur, cols.BetNative, cols.NetEur, cols.NetNative] = moneyColumns;
+       }
+    }
+    cols.WinningNumber = null;
+    const moneyStart = moneyColumns.length === 4 ? moneyColumns[0] : columnCount;
    for (let candidate = 3; candidate < moneyStart; candidate++) {
       if (rouletteRate(candidate) >= .6) {
          cols.WinningNumber = candidate;
-         break;
-      }
-   }
+          break;
+       }
+    }
 
-   CURRENT_COLUMNS = cols;
+    // Live worksheets can contain dimensions before Round Id and Bet Position.
+    // Detect those values by their data shape, while retaining the configured
+    // defaults for older/minimal payloads.
+    const betPositionRate = index => {
+       const values = sampleRows.map(row => getCellText(row[index])).filter(Boolean);
+       if (!values.length) return 0;
+       return values.filter(value => /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$/.test(value)).length / values.length;
+    };
+    const betPositionCandidate = Array.from({ length: moneyStart }, (_, index) => index)
+       .filter(index => index >= 2)
+       .sort((a, b) => betPositionRate(b) - betPositionRate(a))[0];
+    if (betPositionCandidate !== undefined && betPositionRate(betPositionCandidate) >= .6) {
+       cols.BetPosition = betPositionCandidate;
+    }
+
+    const roundIdScore = index => {
+       const values = sampleRows.map(row => getCellText(row[index])).filter(Boolean);
+       if (!values.length) return 0;
+       const integerLong = values.filter(value => /^\d{6,}$/.test(value)).length / values.length;
+       const uniqueRate = new Set(values).size / values.length;
+       return integerLong * uniqueRate;
+    };
+    const roundIdCandidate = Array.from({ length: cols.BetPosition }, (_, index) => index)
+       .filter(index => index > cols.RoundTime)
+       .sort((a, b) => roundIdScore(b) - roundIdScore(a))[0];
+    if (roundIdCandidate !== undefined && roundIdScore(roundIdCandidate) > 0) {
+       cols.RoundID = roundIdCandidate;
+    }
+
+    CURRENT_COLUMNS = cols;
    updateColumnDiagnostics(sumdata, cols);
    return cols;
 }
@@ -781,7 +851,7 @@ function render(sumdata) {
         totalPositions: Array.from(positionCounts.values()).reduce((sum, count) => sum + count, 0)
      };
 
-    drawRadar(order, data);
+     drawRadar(order, data, state.showWinner ? lastWinner : null);
 }
 
 /* Переключатель колеса удерживается пользователем? */
@@ -928,7 +998,7 @@ function drawWinnerChip(context, x, y) {
 /* ------------------------------------------------------------
    РАДАР (Chart.js)
    ------------------------------------------------------------ */
-function drawRadar(labels, data) {
+function drawRadar(labels, data, winnerLabel = null) {
    $("#myChart").remove();
    $(".roulette-container").append('<canvas id="myChart" class="neww"></canvas>');
    updateBackgrounds();
@@ -937,9 +1007,36 @@ function drawRadar(labels, data) {
    const transparent = "transparent";
    const ctx = $("#myChart");
 
-   new Chart(ctx, {
-      type: "radar",
-      data: {
+    const winnerPlugin = {
+       afterDraw: chart => {
+          if (winnerLabel === null || winnerLabel === undefined) return;
+          const winnerIndex = labels.indexOf(String(winnerLabel));
+          if (winnerIndex < 0) return;
+          const image = IMG["WinGame.png"];
+          if (!image || !image.complete || !image.naturalWidth) return;
+
+          const scale = chart.scales && (chart.scales.r || chart.scales["scale"]);
+          if (!scale) return;
+          const centerX = scale.xCenter !== undefined ? scale.xCenter : (chart.chartArea.left + chart.chartArea.right) / 2;
+          const centerY = scale.yCenter !== undefined ? scale.yCenter : (chart.chartArea.top + chart.chartArea.bottom) / 2;
+          const angle = typeof scale.getIndexAngle === "function"
+             ? scale.getIndexAngle(winnerIndex)
+             : (-Math.PI / 2 + (Math.PI * 2 * winnerIndex / labels.length));
+          const radius = (scale.drawingArea || 170) + 18;
+          const size = 72;
+          const x = centerX + Math.cos(angle) * radius - size / 2;
+          const y = centerY + Math.sin(angle) * radius - size / 2;
+          const context = chart.ctx;
+          context.save();
+          context.drawImage(image, x, y, size, size);
+          context.restore();
+       }
+    };
+
+    new Chart(ctx, {
+       type: "radar",
+       plugins: [winnerPlugin],
+       data: {
          labels: labels,
          datasets: [{
             borderColor: grey,
@@ -1033,8 +1130,13 @@ function changeToImg() {
           clonedArea.style.borderRadius = "0";
           clonedArea.style.boxShadow = "none";
           clonedArea.style.background = "#ffffff";
-         clonedArea.style.width = isLayout ? "1000px" : "500px";
-         clonedArea.style.maxWidth = "none";
+          clonedArea.style.setProperty("width", isLayout ? "1000px" : "500px", "important");
+          clonedArea.style.setProperty("min-width", "0", "important");
+          clonedArea.style.setProperty("max-width", "none", "important");
+          clonedArea.style.boxSizing = "border-box";
+          clonedArea.style.display = "flex";
+          clonedArea.style.flexDirection = "column";
+          clonedArea.style.alignItems = "center";
 
          const title = clonedArea.querySelector(".idround");
          if (title) {
@@ -1043,15 +1145,34 @@ function changeToImg() {
             title.style.fontSize = isLayout ? "26px" : "22px";
          }
 
-         if (isLayout) {
-            const wrapper = clonedArea.querySelector(".layout-container");
-            const layoutCanvas = clonedArea.querySelector("#RouletteLayout");
-            if (wrapper) { wrapper.style.width = "1000px"; wrapper.style.overflow = "visible"; }
-            if (layoutCanvas) { layoutCanvas.style.width = "1000px"; layoutCanvas.style.height = "auto"; }
-         } else {
-            const wheel = clonedArea.querySelector(".roulette-container");
-            if (wheel) { wheel.style.width = "470px"; wheel.style.height = "470px"; }
-         }
+          if (isLayout) {
+             const wrapper = clonedArea.querySelector(".layout-container");
+             const layoutCanvas = clonedArea.querySelector("#RouletteLayout");
+             if (wrapper) {
+                wrapper.style.display = "flex";
+                wrapper.style.justifyContent = "center";
+                wrapper.style.width = "100%";
+                wrapper.style.overflow = "visible";
+             }
+             if (layoutCanvas) {
+                layoutCanvas.style.display = "block";
+                layoutCanvas.style.width = "1000px";
+                layoutCanvas.style.height = "auto";
+                layoutCanvas.style.marginLeft = "auto";
+                layoutCanvas.style.marginRight = "auto";
+             }
+          } else {
+             const wheel = clonedArea.querySelector(".roulette-container");
+             if (wheel) {
+                wheel.style.display = "flex";
+                wheel.style.alignItems = "center";
+                wheel.style.justifyContent = "center";
+                wheel.style.setProperty("width", "470px", "important");
+                wheel.style.setProperty("height", "470px", "important");
+                wheel.style.setProperty("margin-left", "auto", "important");
+                wheel.style.setProperty("margin-right", "auto", "important");
+             }
+          }
       }
    }).then(function (canvas) {
       const sreenshot = document.getElementById("sreenshot");
