@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.0.2",
+   version: "2.0.3",
    worksheetName: "work2",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -506,8 +506,9 @@ function render(sumdata) {
    /* --- обход всех строк --- */
    for (let i = 0; i < worksheetData.length; i++) {
       const row = worksheetData[i];
-      const pos = String(row[cols.BetPosition].formattedValue || "").trim();
-      const amount = Number((row[betIdx] || {}).value);
+      const pos = getCellText(row[cols.BetPosition]);
+      const amountCell = row[betIdx];
+      const amount = Number(amountCell && amountCell.value !== undefined ? amountCell.value : getCellText(amountCell));
 
       /* радар: считаем только STRAIGHT_UP и SPLIT (как в оригинале) */
       betNumbers(pos).forEach(n => {
@@ -523,18 +524,18 @@ function render(sumdata) {
 
       /* выигрышный номер (если колонка есть) */
       if (winIdx !== null) {
-         const wv = String(row[winIdx].formattedValue || "").trim();
+          const wv = getCellText(row[winIdx]);
          if (/^(\d{1,2}|00)$/.test(wv)) lastWinner = wv;
       }
 
       /* перерывы */
       if (worksheetData.length > 4) {
          const iNext = i === worksheetData.length - 1 ? i : i + 1;
-         const delta = breakDelta(row[RoundTime].formattedValue, worksheetData[iNext][RoundTime].formattedValue);
+         const delta = breakDelta(getCellText(row[RoundTime]), getCellText(worksheetData[iNext][RoundTime]));
          if (delta.kind === "skip")  RoundSkipp += 1;
          else if (delta.kind === "short") ShortBreak += 1;
          else if (delta.kind === "long")  LongBreak += 1;
-         else if (row[RoundID].formattedValue !== worksheetData[iNext][RoundID].formattedValue) Sequential += 1;
+         else if (getCellText(row[RoundID]) !== getCellText(worksheetData[iNext][RoundID])) Sequential += 1;
       }
    }
 
@@ -567,7 +568,7 @@ function detectWheelFromData(rows) {
 
    for (const row of rows) {
       for (const cell of row) {
-         const value = String((cell && (cell.formattedValue !== undefined ? cell.formattedValue : cell.value)) || "");
+          const value = getCellText(cell);
          if (/america/i.test(value)) sawAmerican = true;
          if (/europe/i.test(value)) sawEuropean = true;
       }
@@ -578,10 +579,19 @@ function detectWheelFromData(rows) {
    return null;
 }
 
+function getCellText(cell) {
+   if (!cell) return "";
+   const value = cell.formattedValue !== undefined && cell.formattedValue !== null
+      ? cell.formattedValue
+      : (cell.value !== undefined && cell.value !== null ? cell.value : cell.nativeValue);
+   return value === undefined || value === null ? "" : String(value).trim();
+}
+
 /* Разница во времени между раундами */
 function breakDelta(startStr, endStr) {
-   const start = moment(startStr, "DD-MM-YYYY HH:mm:ss a");
-   const end = moment(endStr, "DD-MM-YYYY HH:mm:ss a");
+    const formats = ["DD-MM-YYYY HH:mm:ss a", "DD/MM/YYYY h:mm:ss A", "DD/MM/YYYY h:mm A", "M/D/YYYY h:mm:ss A"];
+    const start = moment(startStr, formats, true);
+    const end = moment(endStr, formats, true);
    if (!start.isValid() || !end.isValid()) return { kind: "seq" };
    const minutes = end.diff(start, "minutes");
    const hours = Math.floor(minutes / 60);
@@ -612,7 +622,19 @@ function makeTitle(worksheetData, RoundID, Sequential) {
    РИСОВАНИЕ ФИШЕК
    ------------------------------------------------------------ */
 function drawBetChip(context, x, y, amount) {
-   context.drawImage(IMG["coin.png"], x - 5, y - 10, 45, 45);
+   const chip = IMG["coin.png"];
+   if (chip && chip.complete && chip.naturalWidth > 0) {
+      context.drawImage(chip, x - 5, y - 10, 45, 45);
+   } else {
+      context.beginPath();
+      context.arc(x + 17, y + 12, 15, 0, Math.PI * 2);
+      context.fillStyle = "#e33b67";
+      context.fill();
+      context.beginPath();
+      context.arc(x + 17, y + 12, 9, 0, Math.PI * 2);
+      context.fillStyle = "#fff";
+      context.fill();
+   }
    if (!isNaN(amount)) {
       context.font = "bold 12px arial";
       context.textAlign = "center";
