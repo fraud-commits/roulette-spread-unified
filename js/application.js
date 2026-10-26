@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.2.8",
+   version: "2.2.9",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -570,8 +570,11 @@ function render(sumdata) {
 
        positionCounts.set(pos, (positionCounts.get(pos) || 0) + 1);
 
-       /* Запоминаем фишку; рисуем все уникальные позиции после обхода строк. */
-       chipAmounts.set(pos, amount);
+       /* Повторные ставки увеличивают общий вес позиции. Рисуем одну
+          фишку после обхода, но показываем сумму всех ставок на позиции. */
+       const previousAmount = chipAmounts.get(pos);
+       if (Number.isFinite(amount)) chipAmounts.set(pos, (Number.isFinite(previousAmount) ? previousAmount : 0) + amount);
+       else if (!chipAmounts.has(pos)) chipAmounts.set(pos, amount);
 
       /* выигрышный номер (если колонка есть) */
       if (winIdx !== null) {
