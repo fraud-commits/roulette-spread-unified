@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.0",
+   version: "2.6.1",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -479,17 +479,21 @@ function updateColumnDiagnostics(sumdata, cols) {
    const output = document.getElementById("columnTestOutput");
    if (!output) return;
    const src = sumdata.columns || [];
+   const dataRows = sumdata.data || [];
+    const columnCount = src.length || (dataRows[0] ? dataRows[0].length : 0);
    const roleByIndex = new Map(Object.entries(cols).map(([role, index]) => [index, role]));
    const sample = row => row ? getCellText(row) : "";
    const rows = sumdata.data || [];
    const lines = [
-      "Worksheet columns: " + src.length,
+       "Worksheet columns: " + columnCount + (src.length ? " (metadata available)" : " (inferred from row length)"),
+       "Rows received: " + rows.length,
       "Detected mapping: " + Object.entries(cols).map(([role, index]) => role + "=" + index).join(" | "),
       "",
       "INDEX | FIELD/CAPTION | DETECTED ROLE | SAMPLE"
    ];
-   src.forEach((column, index) => {
-      const name = column.fieldName || column.fieldCaption || column.caption || column.name || "(no caption)";
+    Array.from({ length: columnCount }, (_, index) => index).forEach(index => {
+       const column = src[index] || {};
+       const name = column.fieldName || column.fieldCaption || column.caption || column.name || "(no metadata — positional)";
       lines.push(String(index).padStart(5) + " | " + String(name) + " | " + (roleByIndex.get(String(index)) || "-") + " | " + sample(rows[0]?.[index]));
    });
    output.textContent = lines.join("\n");
@@ -503,13 +507,15 @@ function detectColumns(sumdata) {
    // Helper columns such as "Title NET" are therefore ignored automatically.
    const cols = Object.assign({}, CONFIG.columns);
    const src = sumdata.columns || [];
+   const dataRows = sumdata.data || [];
+   const columnCount = src.length || (dataRows[0] ? dataRows[0].length : 0);
 
    // Validate the optional winning number by its values, not by its caption.
    // It is the first column after Native NET that contains roulette numbers.
    if (sumdata.data && sumdata.data.length) {
       cols.WinningNumber = null;
       const start = Math.max(CONFIG.columns.NetNative, CONFIG.columns.NetEur) + 1;
-      for (let candidate = start; candidate < src.length; candidate++) {
+      for (let candidate = start; candidate < columnCount; candidate++) {
          const values = sumdata.data.slice(0, 100).map(row => getCellText(row[candidate])).filter(Boolean);
          const rouletteValues = values.filter(value => /^(?:00|[0-9]|[1-2][0-9]|3[0-6])$/.test(value));
          if (values.length && rouletteValues.length / values.length >= .6) {
