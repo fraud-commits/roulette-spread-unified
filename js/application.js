@@ -1163,8 +1163,20 @@ function changeToImg() {
              }
           }
       }
-   }).then(function (canvas) {
-      const sreenshot = document.getElementById("sreenshot");
+    }).then(function (canvas) {
+       // html2canvas can retain the original Tableau container width even
+       // after the export clone is narrowed. Crop that unused white area so
+       // a Wheel example is a compact image instead of a left-aligned wheel
+       // surrounded by a large blank canvas.
+       const targetWidth = (isLayout ? 1000 : 500) * 2; // export scale: 2x
+       if (canvas.width > targetWidth) {
+          const cropped = document.createElement("canvas");
+          cropped.width = targetWidth;
+          cropped.height = canvas.height;
+          cropped.getContext("2d").drawImage(canvas, 0, 0, targetWidth, canvas.height, 0, 0, targetWidth, canvas.height);
+          canvas = cropped;
+       }
+       const sreenshot = document.getElementById("sreenshot");
       canvas.classList.add(isLayout ? "example-layout" : "example-wheel");
       canvas.style.width = "100%";
       canvas.style.height = "auto";
