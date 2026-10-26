@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roulette Spread — Unified</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style/style.css?v=2.4.9">
+  <link rel="stylesheet" href="style/style.css?v=2.5.0">
 </head>
 <body>
   <header class="toolbar">
@@ -26,7 +26,7 @@
       </div>
       <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
       <span>CURRENCY: <b class="cur-label">EUR</b></span>
-      <span>VERSION <b class="version-label">2.4.9</b></span>
+      <span>VERSION <b class="version-label">2.5.0</b></span>
     </div>
   </header>
 
@@ -92,7 +92,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="js/application.js?v=2.4.9"></script>
+  <script src="js/application.js?v=2.5.0"></script>
   <script>
     document.getElementById('wheelSelect').addEventListener('change', function () {
       CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
@@ -211,28 +211,37 @@
          .map(([name, numbers]) => ({ name, count: numbers.filter(n => set.has(n)).length, total: numbers.length }))
          .filter(item => item.count >= Math.min(5, item.total)));
        const matchedSectorNames = [...new Set(sectorMatches.flatMap(items => items.map(item => item.name)))];
-       // Detect coverage of separated physical wheel sectors as well as
-       // named French/Racetrack sectors.
-       const wheelSectorSpread = rounds.map((set, i) => {
-         const buckets = new Set([...set].map(number => {
-           const index = wheelOrder.indexOf(number);
-           return index < 0 ? -1 : Math.floor(index / (wheelOrder.length / 4));
-         }).filter(index => index >= 0));
-         return set.size >= 3 && buckets.size >= 2 && wheelRuns[i] < 5;
-       });
-       const sectorSpreadRate = wheelSectorSpread.filter(Boolean).length / Math.max(rounds.length, 1);
+      const wheelClusters = set => {
+        const idx = [...set].map(n => wheelOrder.indexOf(n)).filter(i => i >= 0).sort((a, b) => a - b);
+        if (idx.length < 3) return 0;
+        let startAt = 0, largestGap = -1;
+        for (let i = 0; i < idx.length; i++) {
+          const gap = (idx[(i + 1) % idx.length] - idx[i] + wheelOrder.length) % wheelOrder.length;
+          if (gap > largestGap) { largestGap = gap; startAt = (i + 1) % idx.length; }
+        }
+        const ordered = idx.slice(startAt).concat(idx.slice(0, startAt));
+        let clusters = 0, run = 1;
+        for (let i = 1; i <= ordered.length; i++) {
+          if (i < ordered.length && ordered[i] === ordered[i - 1] + 1) { run++; continue; }
+          if (run >= 3) clusters++;
+          run = 1;
+        }
+        return clusters;
+      };
+      const sectorRoundRate = rounds.filter(set => wheelClusters(set) >= 2).length / Math.max(rounds.length, 1);
       const answers = {};
       answers.wheelSequential = sequenceRate(wheelRuns) >= .5 ? 'In many sequential games' : sequenceRate(wheelRuns) > 0 ? 'From time to time' : rounds.length <= 1 ? 'Only one game round held' : 'No';
        const layoutSequentialRate = rounds.filter((set, i) => layoutRuns[i] >= 5 || layoutSpecialRun[i] >= 5).length / Math.max(rounds.length, 1);
-        const multiSectorRound = sectorMatches.some(items => items.length >= 2) || sectorSpreadRate > 0;
+
        answers.layoutSequential = layoutSequentialRate >= .5 ? 'In many sequential games' : layoutSequentialRate > 0 ? 'From time to time' : rounds.length <= 1 ? 'Only one game round held' : 'No';
-        answers.sectors = sectorSpreadRate >= .5 || sectorMatches.some(items => items.length >= 2)
-          ? (matchedSectorNames.length ? 'Yes — ' + matchedSectorNames.join(', ') : 'Yes')
-          : multiSectorRound ? 'From time to time' : 'No';
+        answers.sectors = matchedSectorNames.length >= 2
+          ? 'Yes — ' + matchedSectorNames.join(', ')
+          : matchedSectorNames.length === 1 ? 'Yes — ' + matchedSectorNames[0]
+          : sectorRoundRate >= .5 ? 'Yes' : sectorRoundRate > 0 ? 'From time to time' : 'No';
        const randomRoundRate = rounds.filter((set, i) => {
          const hasSeveralNumbers = set.size >= 2;
          const hasSequence = wheelRuns[i] >= 5 || layoutRuns[i] >= 5 || layoutSpecialRun[i] >= 5;
-         const hasSectorPattern = sectorMatches[i].length > 0;
+         const hasSectorPattern = sectorMatches[i].length > 0 || wheelClusters(set) >= 2;
          return hasSeveralNumbers && !hasSequence && !hasSectorPattern;
        }).length / Math.max(rounds.length, 1);
        answers.random = randomRoundRate >= .6 ? 'Yes' : randomRoundRate > 0 ? 'From time to time' : 'No, placing bets chaotically';
