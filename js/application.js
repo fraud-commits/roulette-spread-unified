@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.5.3",
+   version: "2.5.4",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -233,6 +233,38 @@ let unregisterFilterEventListener = null;
 let unregisterMarkSelectionEventListener = null;
 let unregisterSettingsEventListener = null;
 let currencyIndexCache = null;   // пересчитывается при каждом drawChartJS
+let layoutHoverCounts = new Map();
+
+function setupLayoutHover() {
+   const canvas = document.getElementById("RouletteLayout");
+   const tooltip = document.getElementById("layoutTooltip");
+   const wrapper = document.querySelector(".layout-container");
+   if (!canvas || !tooltip || !wrapper || canvas.dataset.hoverReady) return;
+   canvas.dataset.hoverReady = "true";
+   canvas.addEventListener("mousemove", event => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (event.clientX - rect.left) * 1143 / rect.width;
+      const y = (event.clientY - rect.top) * 480 / rect.height;
+      let number = null;
+      if (x < 140 && y >= 35 && y <= 300) number = "0";
+      else if (x >= 102 && x <= 1060 && y >= 35 && y <= 300) {
+         const column = Math.floor((x - 102) / COL_STEP) + 1;
+         const row = Math.round((y - 55) / 100);
+         if (column >= 1 && column <= 12 && [0, 1, 2].includes(row)) {
+            const value = (column - 1) * 3 + (row === 0 ? 3 : row === 1 ? 1 : 2);
+            if (value >= 1 && value <= 36) number = String(value);
+         }
+      }
+      const count = number === null ? 0 : (layoutHoverCounts.get(number) || 0);
+      if (!count) { tooltip.style.display = "none"; return; }
+      const wrapperRect = wrapper.getBoundingClientRect();
+      tooltip.textContent = "Number: " + number + " · Placed: " + count + (count === 1 ? " time" : " times");
+      tooltip.style.left = (event.clientX - wrapperRect.left + 12) + "px";
+      tooltip.style.top = (event.clientY - wrapperRect.top + 12) + "px";
+      tooltip.style.display = "block";
+   });
+   canvas.addEventListener("mouseleave", () => { tooltip.style.display = "none"; });
+}
 
 /* ------------------------------------------------------------
    ЗАГРУЗКА КАРТИНОК (однократно)
@@ -351,7 +383,8 @@ $(document).ready(function () {
        $(".container").toggleClass("hide", isLayout);
        $(".mode-switch").prop("checked", isLayout);
        $(".example-mode-switch").prop("checked", isLayout);
-       requestAnimationFrame(fitLayoutCanvas);
+    requestAnimationFrame(fitLayoutCanvas);
+    setupLayoutHover();
     }
 
     $(".mode-switch").click(function () {
@@ -644,12 +677,19 @@ function render(sumdata) {
        }
     }
 
-     positionCounts.forEach((count, pos) => {
-        betNumbers(pos).forEach(n => {
-           const idx = order.indexOf(n);
-           if (idx !== -1) data[idx] += count;
-        });
-     });
+      positionCounts.forEach((count, pos) => {
+         betNumbers(pos).forEach(n => {
+            const idx = order.indexOf(n);
+            if (idx !== -1) data[idx] += count;
+         });
+      });
+
+      layoutHoverCounts = new Map();
+      positionCounts.forEach((count, pos) => {
+         betNumbers(pos).forEach(number => {
+            layoutHoverCounts.set(number, (layoutHoverCounts.get(number) || 0) + count);
+         });
+      });
 
     chipAmounts.forEach((amount, pos) => {
        const chipXY = (OUTSIDE[pos] !== undefined)
