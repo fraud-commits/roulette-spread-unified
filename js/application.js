@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.11",
+   version: "2.6.12",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -381,7 +381,8 @@ $(document).ready(function () {
        $(".container").toggleClass("hide", isLayout);
        $(".mode-switch").prop("checked", isLayout);
        $(".example-mode-switch").prop("checked", isLayout);
-    requestAnimationFrame(fitLayoutCanvas);
+     requestAnimationFrame(fitLayoutCanvas);
+     requestAnimationFrame(fitWheelCanvas);
     setupLayoutHover();
     }
 
@@ -414,12 +415,16 @@ $(document).ready(function () {
 
    updateCurrencyLabels();
    updateWheelLabel();
-   window.addEventListener("resize", fitLayoutCanvas);
+    window.addEventListener("resize", fitLayoutCanvas);
+    window.addEventListener("resize", fitWheelCanvas);
    if (window.ResizeObserver) {
       const layoutContainer = document.querySelector(".layout-container");
       if (layoutContainer) new ResizeObserver(fitLayoutCanvas).observe(layoutContainer);
+      const wheelContainer = document.querySelector(".roulette-container");
+      if (wheelContainer) new ResizeObserver(fitWheelCanvas).observe(wheelContainer);
    }
    requestAnimationFrame(fitLayoutCanvas);
+   requestAnimationFrame(fitWheelCanvas);
 });
 
 function fitLayoutCanvas() {
@@ -438,6 +443,20 @@ function fitLayoutCanvas() {
 
    canvas.style.width = Math.floor(1143 * scale) + "px";
    canvas.style.height = Math.floor(480 * scale) + "px";
+}
+
+function fitWheelCanvas() {
+   const canvas = document.getElementById("myChart");
+   const wrapper = document.querySelector(".roulette-container");
+   const section = document.querySelector(".container");
+   if (!canvas || !wrapper || !section || section.classList.contains("hide")) return;
+   const widthLimit = Math.max(280, (section.clientWidth || 1143) - 20);
+   const sectionTop = section.getBoundingClientRect().top;
+   const titleHeight = section.querySelector(".idround")?.getBoundingClientRect().height || 70;
+   const heightLimit = Math.max(280, window.innerHeight - sectionTop - titleHeight - 48);
+   const size = Math.floor(Math.min(470, widthLimit * 480 / 1143, heightLimit));
+   wrapper.style.width = size + "px";
+   wrapper.style.height = size + "px";
 }
 
 /* Слушатели фильтров/марок рабочего листа */
