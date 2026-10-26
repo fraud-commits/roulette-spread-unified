@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roulette Spread — Unified</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style/style.css?v=2.1.4">
+  <link rel="stylesheet" href="style/style.css?v=2.1.5">
 </head>
 <body>
   <header class="toolbar">
@@ -17,7 +17,7 @@
     <div class="toolbar-meta">
       <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
       <span>CURRENCY: <b class="cur-label">EUR</b></span>
-      <span>VERSION <b class="version-label">2.1.4</b></span>
+      <span>VERSION <b class="version-label">2.1.5</b></span>
     </div>
   </header>
 
@@ -54,7 +54,7 @@
     </section>
 
     <section class="examples" id="game-examples">
-      <div class="control-btn">
+      <div class="control-btn" data-html2canvas-ignore="true">
         <button class="btn btn-dark btn-sm" type="button" onclick="changeToImg()">Add Example</button>
         <button class="btn btn-dark btn-sm" type="button" onclick="resetTheImageArea()">Restart</button>
         <button class="btn btn-dark btn-sm" type="button" onclick="changeToImg2()"><a id="download" role="button">Generate</a></button>
@@ -69,7 +69,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="js/application.js?v=2.1.4"></script>
+  <script src="js/application.js?v=2.1.5"></script>
   <script>
     document.getElementById('wheelSelect').addEventListener('change', function () {
       CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
