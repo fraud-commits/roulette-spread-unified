@@ -19,8 +19,8 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.0.3",
-   worksheetName: "work2",
+   version: "2.0.4",
+   worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
    wheel: "EUROPEAN",       // 'EUROPEAN' | 'AMERICAN'  (или 'AUTO' из данных)
