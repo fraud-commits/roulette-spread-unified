@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.17",
+   version: "2.6.18",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -736,8 +736,13 @@ function render(sumdata) {
    /* --- автоопределение типа колеса по значениям строк ---
       Ищем слово America во всех ячейках, чтобы не зависеть от имени
       или позиции Game Type и от наличия необязательной Win Result. */
-   const gameTypeWheel = detectWheelFromData(worksheetData);
-   if (gameTypeWheel && state.wheel !== gameTypeWheel) {
+    const gameTypeWheel = detectWheelFromData(worksheetData);
+    const wheelWarning = document.getElementById("wheelWarning");
+    if (wheelWarning) wheelWarning.hidden = gameTypeWheel !== "MIXED";
+    if (gameTypeWheel === "MIXED") {
+       // Mixed European/American data cannot be represented by one wheel.
+       // Keep the user's current choice and require a manual selection.
+    } else if (gameTypeWheel && state.wheel !== gameTypeWheel) {
       state.wheel = gameTypeWheel;
       const wheelSelect = document.getElementById("wheelSelect");
       if (wheelSelect) wheelSelect.value = gameTypeWheel;
@@ -894,7 +899,8 @@ function detectWheelFromData(rows) {
       }
    }
 
-   if (sawAmerican) return "AMERICAN";
+    if (sawAmerican && sawEuropean) return "MIXED";
+    if (sawAmerican) return "AMERICAN";
    if (sawEuropean) return "EUROPEAN";
    return null;
 }
@@ -1101,6 +1107,7 @@ function drawRadar(labels, data, winnerLabel = null) {
           const crown = document.createElement("span");
           crown.className = "wheel-winner-crown";
           crown.setAttribute("aria-label", "Winning number marker");
+          crown.dataset.angle = String(angle);
           crown.style.left = (centerX + Math.cos(angle) * crownRadius) + "px";
           crown.style.top = (centerY + Math.sin(angle) * crownRadius) + "px";
           crown.style.transform = "translate(-50%, -50%) rotate(" + (angle + Math.PI / 2) + "rad)";
@@ -1177,15 +1184,24 @@ function changeToImg() {
              }
           } else {
              const wheel = clonedArea.querySelector(".roulette-container");
-             if (wheel) {
+              if (wheel) {
                 wheel.style.display = "flex";
                 wheel.style.alignItems = "center";
                 wheel.style.justifyContent = "center";
                 wheel.style.setProperty("width", "470px", "important");
                 wheel.style.setProperty("height", "470px", "important");
-                wheel.style.setProperty("margin-left", "auto", "important");
-                wheel.style.setProperty("margin-right", "auto", "important");
-             }
+                 wheel.style.setProperty("margin-left", "auto", "important");
+                 wheel.style.setProperty("margin-right", "auto", "important");
+                 wheel.style.setProperty("margin-top", "44px", "important");
+                 const exportCanvas = wheel.querySelector("#myChart");
+                 const exportCrown = wheel.querySelector(".wheel-winner-crown");
+                 if (exportCanvas && exportCrown) {
+                    const exportSize = Math.min(exportCanvas.clientWidth, exportCanvas.clientHeight);
+                    const exportAngle = Number(exportCrown.dataset.angle);
+                    exportCrown.style.left = (exportSize / 2 + Math.cos(exportAngle) * exportSize * .56) + "px";
+                    exportCrown.style.top = (exportSize / 2 + Math.sin(exportAngle) * exportSize * .56) + "px";
+                 }
+              }
           }
       }
     }).then(function (canvas) {

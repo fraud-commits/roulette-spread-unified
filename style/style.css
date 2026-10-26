@@ -49,6 +49,7 @@ button, select, summary, input { accent-color: var(--lfs-green); }
 .check-setting { padding: 7px 10px; border: 1px solid var(--lfs-border); border-radius: 8px; background: #fff; white-space: nowrap; cursor: pointer; transition: border-color .15s ease, background .15s ease, color .15s ease; }
 .check-setting:hover { border-color: var(--lfs-green); background: var(--lfs-mint); }
 .check-setting input { width: 15px; height: 15px; margin: 0; }
+.wheel-warning { padding: 6px 10px; border: 1px solid #E5C77A; border-radius: 7px; color: #7A5A00; background: #FFF8E3; font-size: 12px; font-weight: 600; }
 
 main { min-height: calc(100vh - 124px); }
 .report-helper { margin: 12px 20px 0; padding: 0; color: var(--lfs-text); font-size: 13px; }
