@@ -457,8 +457,18 @@ function render(sumdata) {
    canvas.width = 1143;
    canvas.height = 480;
 
-   /* --- автоопределение типа колеса по данным --- */
-   if (CONFIG.wheelAuto && !isManualWheel()) {
+   /* --- автоопределение типа колеса по значениям строк ---
+      Ищем слово America во всех ячейках, чтобы не зависеть от имени
+      или позиции Game Type и от наличия необязательной Win Result. */
+   const gameTypeWheel = detectWheelFromData(worksheetData);
+   if (gameTypeWheel && state.wheel !== gameTypeWheel) {
+      state.wheel = gameTypeWheel;
+      const wheelSelect = document.getElementById("wheelSelect");
+      if (wheelSelect) wheelSelect.value = gameTypeWheel;
+      updateWheelLabel();
+      updateBackgrounds();
+   } else if (!gameTypeWheel && CONFIG.wheelAuto && !isManualWheel()) {
+      // Fallback for data without a Game Type field: a 00 bet implies American.
       const has00 = worksheetData.some(r => /00/.test(String(r[cols.BetPosition].formattedValue || "")));
       if (has00 && state.wheel !== "AMERICAN") {
          state.wheel = "AMERICAN";
@@ -549,6 +559,23 @@ function isManualWheel() {
    // CONFIG.wheelAuto отключается кликом по переключателю; после ручного
    // выбора автодетект больше не меняет колесо.
    return !CONFIG.wheelAuto;
+}
+
+function detectWheelFromData(rows) {
+   let sawAmerican = false;
+   let sawEuropean = false;
+
+   for (const row of rows) {
+      for (const cell of row) {
+         const value = String((cell && (cell.formattedValue !== undefined ? cell.formattedValue : cell.value)) || "");
+         if (/america/i.test(value)) sawAmerican = true;
+         if (/europe/i.test(value)) sawEuropean = true;
+      }
+   }
+
+   if (sawAmerican) return "AMERICAN";
+   if (sawEuropean) return "EUROPEAN";
+   return null;
 }
 
 /* Разница во времени между раундами */
