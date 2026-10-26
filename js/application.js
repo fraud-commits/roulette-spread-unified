@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.2.1",
+   version: "2.2.2",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -576,7 +576,7 @@ function render(sumdata) {
    $(".longcnt").text(LongBreak);
 
    /* --- заголовок --- */
-   $(".idround").text(makeTitle(worksheetData, RoundID));
+    $(".idround").text(makeTitle(worksheetData, RoundID, RoundTime));
 
    drawRadar(order, data);
 }
@@ -648,19 +648,38 @@ function breakDelta(startStr, endStr) {
    return { kind: "seq" };
 }
 
-/* Заголовок сверху */
-function makeTitle(worksheetData, RoundID) {
+function parseRoundDate(value) {
+   const formats = [
+      "DD-MM-YYYY HH:mm:ss A", "DD-MM-YYYY hh:mm:ss a", "DD-MM-YYYY HH:mm",
+      "DD/MM/YYYY HH:mm:ss A", "DD/MM/YYYY h:mm:ss A", "DD/MM/YYYY h:mm A",
+      "M/D/YYYY h:mm:ss A", "M/D/YYYY h:mm A", "YYYY-MM-DD HH:mm:ss",
+      "YYYY-MM-DDTHH:mm:ss.SSSZ", "DD.MM.YYYY"
+   ];
+   const parsed = moment(value, formats, true);
+   return parsed.isValid() ? parsed : null;
+}
+
+/* Заголовок по диапазону дат данных */
+function makeTitle(worksheetData, RoundID, RoundTime) {
    const roundIds = new Set(worksheetData.map(row => getCellText(row[RoundID])).filter(Boolean));
    const isLayout = $(".container").hasClass("hide");
+   const dates = worksheetData
+      .map(row => parseRoundDate(getCellText(row[RoundTime])))
+      .filter(Boolean)
+      .sort((a, b) => a.valueOf() - b.valueOf());
 
-   if (roundIds.size > 1) {
-      return isLayout ? "All Bets — Roulette Layout" : "All Straight-Up Bets";
+   if (dates.length) {
+      const minDate = dates[0].format("DD.MM.YYYY");
+      const maxDate = dates[dates.length - 1].format("DD.MM.YYYY");
+      const dateLabel = minDate === maxDate ? minDate : `${minDate} – ${maxDate}`;
+      return isLayout
+         ? `${dateLabel} All Bet Layout Spread`
+         : `${dateLabel} Straight-Up Bet${minDate === maxDate ? "" : " Wheel"} Spread`;
    }
 
+   if (roundIds.size > 1) return isLayout ? "All Bets — Roulette Layout" : "All Straight-Up Bets";
    const roundId = roundIds.size === 1 ? Array.from(roundIds)[0] : getCellText(worksheetData[0][RoundID]);
-   return isLayout
-      ? "Game Round: " + roundId + " Layout Spread"
-      : "Game Round: " + roundId + " Straight-Up Bet Spread";
+   return isLayout ? "Game Round: " + roundId + " Layout Spread" : "Game Round: " + roundId + " Straight-Up Bet Spread";
 }
 
 /* ------------------------------------------------------------
