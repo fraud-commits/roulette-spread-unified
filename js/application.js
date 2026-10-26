@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.1.9",
+   version: "2.2.0",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -200,8 +200,9 @@ function formatAmount(a) {
    ------------------------------------------------------------ */
 const state = {
    wheel: CONFIG.wheel,
-   currency: CONFIG.currency,
-   showWinner: CONFIG.showWinner,
+    currency: CONFIG.currency,
+    showWinner: CONFIG.showWinner,
+    showChipValues: true,
    tableauReady: false
 };
 
@@ -545,7 +546,7 @@ function render(sumdata) {
       const chipXY = (OUTSIDE[pos] !== undefined)
          ? OUTSIDE[pos]
          : insidePos(pos) || straightPos(pos.startsWith("STRAIGHT_UP_") ? pos.slice(12) : pos);
-      if (chipXY) drawBetChip(context, chipXY[0], chipXY[1], amount);
+       if (chipXY) drawBetChip(context, chipXY[0], chipXY[1], amount, state.showChipValues);
 
       /* выигрышный номер (если колонка есть) */
       if (winIdx !== null) {
@@ -665,7 +666,7 @@ function makeTitle(worksheetData, RoundID) {
 /* ------------------------------------------------------------
    РИСОВАНИЕ ФИШЕК
    ------------------------------------------------------------ */
-function drawBetChip(context, x, y, amount) {
+function drawBetChip(context, x, y, amount, showValue) {
    const chip = IMG["coin.png"];
    if (chip && chip.complete && chip.naturalWidth > 0) {
       context.drawImage(chip, x - 5, y - 10, 45, 45);
@@ -679,7 +680,7 @@ function drawBetChip(context, x, y, amount) {
       context.fillStyle = "#fff";
       context.fill();
    }
-   if (!isNaN(amount)) {
+   if (showValue && !isNaN(amount)) {
       context.font = "bold 12px arial";
       context.textAlign = "center";
       context.fillStyle = "black";
