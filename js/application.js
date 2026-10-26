@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.1",
+   version: "2.6.2",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -500,28 +500,38 @@ function updateColumnDiagnostics(sumdata, cols) {
 }
 
 function detectColumns(sumdata) {
-   // Columns are identified by their stable Tableau position, not by captions.
-   // Different clients may rename fields, but the worksheet order is fixed:
-   // 0 Round Time | 1 Round Id | 2 Bet Position | 3 BET EUR | 4 NET EUR
-   // 5 BET NAT(IVE) | 6 NET NAT(IVE) | 7+ Winning Number (optional).
-   // Helper columns such as "Title NET" are therefore ignored automatically.
+   // Captions differ between clients. Use the worksheet structure instead:
+   // the final four numeric columns are BET EUR, BET Native, NET EUR, NET
+   // Native. Any numeric helper before that block (for example Title NET) is
+   // ignored. The optional winning number is found before the money block by
+   // its roulette-value range only.
    const cols = Object.assign({}, CONFIG.columns);
    const src = sumdata.columns || [];
    const dataRows = sumdata.data || [];
    const columnCount = src.length || (dataRows[0] ? dataRows[0].length : 0);
-
-   // Validate the optional winning number by its values, not by its caption.
-   // It is the first column after Native NET that contains roulette numbers.
-   if (sumdata.data && sumdata.data.length) {
-      cols.WinningNumber = null;
-      const start = Math.max(CONFIG.columns.NetNative, CONFIG.columns.NetEur) + 1;
-      for (let candidate = start; candidate < columnCount; candidate++) {
-         const values = sumdata.data.slice(0, 100).map(row => getCellText(row[candidate])).filter(Boolean);
-         const rouletteValues = values.filter(value => /^(?:00|[0-9]|[1-2][0-9]|3[0-6])$/.test(value));
-         if (values.length && rouletteValues.length / values.length >= .6) {
-            cols.WinningNumber = candidate;
-            break;
-         }
+   const sampleRows = dataRows.slice(0, 100);
+   const numericRate = index => {
+      const values = sampleRows.map(row => row[index]).filter(cell => getCellText(cell) !== "");
+      if (!values.length) return 0;
+      return values.filter(cell => Number.isFinite(parseDisplayedAmount(cell))).length / values.length;
+   };
+   const rouletteRate = index => {
+      const values = sampleRows.map(row => getCellText(row[index])).filter(Boolean);
+      if (!values.length) return 0;
+      return values.filter(value => /^(?:00|[0-9]|[1-2][0-9]|3[0-6])$/.test(value)).length / values.length;
+   };
+   const numericColumns = Array.from({ length: columnCount }, (_, index) => index)
+      .filter(index => index >= 3 && numericRate(index) >= .6);
+   const moneyColumns = numericColumns.slice(-4);
+   if (moneyColumns.length === 4) {
+      [cols.BetEur, cols.BetNative, cols.NetEur, cols.NetNative] = moneyColumns;
+   }
+   cols.WinningNumber = null;
+   const moneyStart = moneyColumns.length === 4 ? moneyColumns[0] : columnCount;
+   for (let candidate = 3; candidate < moneyStart; candidate++) {
+      if (rouletteRate(candidate) >= .6) {
+         cols.WinningNumber = candidate;
+         break;
       }
    }
 
