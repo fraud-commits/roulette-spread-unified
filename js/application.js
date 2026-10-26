@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.2.6",
+   version: "2.2.7",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -557,8 +557,11 @@ function render(sumdata) {
       return;
    }
 
-   /* --- обход всех строк --- */
-   for (let i = 0; i < worksheetData.length; i++) {
+    /* --- обход всех строк --- */
+    // A long Tableau selection can contain thousands of rows. Keep only the
+    // last displayed chip value for each position and paint each position once.
+    const chipAmounts = new Map();
+    for (let i = 0; i < worksheetData.length; i++) {
       const row = worksheetData[i];
        const pos = normalizeBetPosition(getCellText(row[cols.BetPosition]));
       const amountCell = row[betIdx];
@@ -570,11 +573,8 @@ function render(sumdata) {
          if (idx !== -1) data[idx] += 1;
       });
 
-      /* фишка ставки на раскладке */
-      const chipXY = (OUTSIDE[pos] !== undefined)
-         ? OUTSIDE[pos]
-         : insidePos(pos) || straightPos(pos.startsWith("STRAIGHT_UP_") ? pos.slice(12) : pos);
-       if (chipXY) drawBetChip(context, chipXY[0], chipXY[1], amount, state.showChipValues);
+       /* Запоминаем фишку; рисуем все уникальные позиции после обхода строк. */
+       chipAmounts.set(pos, amount);
 
       /* выигрышный номер (если колонка есть) */
       if (winIdx !== null) {
@@ -593,7 +593,14 @@ function render(sumdata) {
       }
    }
 
-   /* --- фишка выигрышного номера (последний розыгрыш) --- */
+    chipAmounts.forEach((amount, pos) => {
+       const chipXY = (OUTSIDE[pos] !== undefined)
+          ? OUTSIDE[pos]
+          : insidePos(pos) || straightPos(pos.startsWith("STRAIGHT_UP_") ? pos.slice(12) : pos);
+       if (chipXY) drawBetChip(context, chipXY[0], chipXY[1], amount, state.showChipValues);
+    });
+
+    /* --- фишка выигрышного номера (последний розыгрыш) --- */
    if (state.showWinner && winIdx !== null && lastWinner !== null) {
       const wpos = straightPos(lastWinner);
       if (wpos) drawWinnerChip(context, wpos[0], wpos[1]);
