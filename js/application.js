@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.0.8",
+   version: "2.0.9",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -574,7 +574,7 @@ function render(sumdata) {
    $(".longcnt").text(LongBreak);
 
    /* --- заголовок --- */
-   $(".idround").text(makeTitle(worksheetData, RoundID, Sequential));
+   $(".idround").text(makeTitle(worksheetData, RoundID));
 
    drawRadar(order, data);
 }
@@ -648,19 +648,18 @@ function breakDelta(startStr, endStr) {
 }
 
 /* Заголовок сверху */
-function makeTitle(worksheetData, RoundID, Sequential) {
-   const w = state.wheel === "AMERICAN" ? "American" : "European";
+function makeTitle(worksheetData, RoundID) {
+   const roundIds = new Set(worksheetData.map(row => getCellText(row[RoundID])).filter(Boolean));
+   const isLayout = $(".container").hasClass("hide");
 
-   if ($(".container-2").hasClass("hide") && Sequential < 1) {
-      return "Game Round: " + worksheetData[0][RoundID].formattedValue + " Straight-Up Bet Spread";
+   if (roundIds.size > 1) {
+      return isLayout ? "All Bets — Roulette Layout" : "All Straight-Up Bets";
    }
-   if ($(".container").hasClass("hide")) {
-      return "Game Round: " + worksheetData[0][RoundID].formattedValue + " Layout Spread";
-   }
-   if (Sequential > 1) {
-      return "Session Straight-Up Bet Spread (" + w + " / " + cur + ")";
-   }
-   return "Game Round: " + worksheetData[0][RoundID].formattedValue + " Straight-Up Bet Spread";
+
+   const roundId = roundIds.size === 1 ? Array.from(roundIds)[0] : getCellText(worksheetData[0][RoundID]);
+   return isLayout
+      ? "Game Round: " + roundId + " Layout Spread"
+      : "Game Round: " + roundId + " Straight-Up Bet Spread";
 }
 
 /* ------------------------------------------------------------
