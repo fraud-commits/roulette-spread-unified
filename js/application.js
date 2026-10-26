@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.8",
+   version: "2.6.9",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -251,7 +251,9 @@ function setupLayoutHover() {
       const wrapperRect = wrapper.getBoundingClientRect();
       const count = target.count;
       tooltip.textContent = "Bet: " + target.position + " · Placed: " + count + (count === 1 ? " time" : " times") + " · Stake: " + formatAmount(target.amount);
-      tooltip.style.left = (event.clientX - wrapperRect.left + 12) + "px";
+      let tooltipLeft = event.clientX - wrapperRect.left + 12;
+      if (tooltipLeft + tooltip.offsetWidth > wrapper.clientWidth) tooltipLeft = event.clientX - wrapperRect.left - tooltip.offsetWidth - 12;
+      tooltip.style.left = Math.max(4, tooltipLeft) + "px";
       tooltip.style.top = (event.clientY - wrapperRect.top + 12) + "px";
       tooltip.style.display = "block";
    });
