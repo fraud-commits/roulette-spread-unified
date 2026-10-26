@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.3.9",
+   version: "2.4.0",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -458,6 +458,17 @@ function detectColumns(sumdata) {
    });
    if (nativeBet !== -1) cols.BetNative = nativeBet;
 
+   // Winning number is optional and its caption is not stable. The Tableau
+   // layout order is stable: it follows Native NET. Accept it only when the
+   // candidate column contains roulette values (0–36 or 00), so Game Type is
+   // never mistaken for a winning number.
+   if (cols.WinningNumber === null && sumdata.data && sumdata.data.length) {
+      const candidate = Math.max(cols.NetNative, cols.NetEur) + 1;
+      const values = sumdata.data.slice(0, 100).map(row => getCellText(row[candidate])).filter(Boolean);
+      const rouletteValues = values.filter(value => /^(?:00|[0-9]|[1-2][0-9]|3[0-6])$/.test(value));
+      if (values.length && rouletteValues.length / values.length >= .6) cols.WinningNumber = candidate;
+   }
+
    CURRENT_COLUMNS = cols;
    return cols;
 }
@@ -492,7 +503,7 @@ function drawChartJS() {
 
    return source.then(function (result) {
       let sumdata = result && result.summary ? result.summary : result;
-      const selectedRoundIds = result && result.selected ? getSelectedRoundIds(result.selected) : new Set();
+       const selectedRoundIds = result && result.selected ? getSelectedRoundIds(result.selected, sumdata) : new Set();
       if (selectedRoundIds.size && sumdata.data) {
          const summaryCols = detectColumns(sumdata);
          const selectedRows = sumdata.data.filter(row => selectedRoundIds.has(getCellText(row[summaryCols.RoundID])));
@@ -510,23 +521,23 @@ function drawChartJS() {
                 .catch(err => console.log("drawChartJS error: " + err));
 }
 
-function getSelectedRoundIds(selectedMarks) {
+function getSelectedRoundIds(selectedMarks, summary) {
    const ids = new Set();
-   const firstMark = selectedMarks && selectedMarks.data && selectedMarks.data[0];
-   const firstMarkData = firstMark && firstMark.data;
-   const firstMarkTable = firstMarkData && !Array.isArray(firstMarkData) ? firstMarkData : null;
-   const columns = (firstMark && firstMark.columns) || (firstMarkTable && firstMarkTable.columns) || (selectedMarks && selectedMarks.columns) || [];
-   const roundIndex = columns.findIndex(c => /ROUND\s*ID/i.test(String(c.fieldName || c.fieldCaption || c.caption || c.name || "")));
-   // The usual worksheet order is Round Time, Round Id. This fallback also
-   // handles Tableau mark payloads that omit the column metadata.
-   const index = roundIndex === -1 ? CONFIG.columns.RoundID : roundIndex;
    if (!selectedMarks.data) return ids;
-   selectedMarks.data.forEach(mark => {
-      const markData = mark && mark.data;
-      let rows;
-      if (markData && Array.isArray(markData.data)) rows = markData.data;
-      else if (Array.isArray(markData)) rows = markData.length && (markData[0].formattedValue !== undefined || markData[0].value !== undefined) ? [markData] : markData;
-      else rows = [mark];
+   const summaryCols = summary ? detectColumns(summary) : CONFIG.columns;
+   const knownIds = new Set((summary && summary.data ? summary.data : []).map(row => getCellText(row[summaryCols.RoundID])).filter(Boolean));
+   selectedMarks.data.forEach(table => {
+      const columns = table.columns || [];
+      const rows = Array.isArray(table.data) ? table.data : [];
+      let index = columns.findIndex(c => /ROUND\s*ID/i.test(String(c.fieldName || c.fieldCaption || c.caption || c.name || "")));
+      if (index === -1 && rows.length && knownIds.size) {
+         let bestCount = 0;
+         for (let i = 0; i < rows[0].length; i++) {
+            const count = rows.filter(row => knownIds.has(getCellText(row[i]))).length;
+            if (count > bestCount) { bestCount = count; index = i; }
+         }
+      }
+      if (index === -1) index = CONFIG.columns.RoundID;
       rows.forEach(row => {
          const value = getCellText(row[index]);
          if (value) ids.add(value);
