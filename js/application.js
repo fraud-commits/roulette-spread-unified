@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.15",
+   version: "2.6.16",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1019,7 +1019,7 @@ function drawWinnerChip(context, x, y) {
    ------------------------------------------------------------ */
 function drawRadar(labels, data, winnerLabel = null) {
     $("#myChart").remove();
-    $(".wheel-winner-overlay").remove();
+    $(".wheel-winner-crown").remove();
     $(".roulette-container").append('<canvas id="myChart" class="neww"></canvas>');
    updateBackgrounds();
 
@@ -1090,16 +1090,22 @@ function drawRadar(labels, data, winnerLabel = null) {
 
     if (winnerLabel !== null && winnerLabel !== undefined) {
        const winnerIndex = labels.indexOf(String(winnerLabel));
-       const image = IMG["WinGame.png"];
-       if (winnerIndex >= 0 && image && image.src) {
+          if (winnerIndex >= 0) {
           const angle = -Math.PI / 2 + (Math.PI * 2 * winnerIndex / labels.length);
-          const overlay = document.createElement("img");
-          overlay.className = "wheel-winner-overlay";
-          overlay.src = image.src;
-          overlay.alt = "Winning number " + winnerLabel;
-          overlay.style.left = (50 + Math.cos(angle) * 43) + "%";
-          overlay.style.top = (50 + Math.sin(angle) * 43) + "%";
-          document.querySelector(".roulette-container")?.appendChild(overlay);
+          const canvas = document.getElementById("myChart");
+          const container = document.querySelector(".roulette-container");
+          const size = canvas ? Math.min(canvas.clientWidth, canvas.clientHeight) : 470;
+          const centerX = (canvas ? canvas.offsetLeft : 0) + size / 2;
+          const centerY = (canvas ? canvas.offsetTop : 0) + size / 2;
+          const crownRadius = size * .56;
+          const crown = document.createElement("span");
+          crown.className = "wheel-winner-crown";
+          crown.setAttribute("aria-label", "Winning number marker");
+          crown.style.left = (centerX + Math.cos(angle) * crownRadius) + "px";
+          crown.style.top = (centerY + Math.sin(angle) * crownRadius) + "px";
+          crown.style.transform = "translate(-50%, -50%) rotate(" + (angle + Math.PI / 2) + "rad)";
+          crown.innerHTML = '<svg viewBox="0 0 30 24" aria-hidden="true"><path d="M3 5l5 6 7-8 7 8 5-6-3 15H6L3 5zM6 20h18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+          document.querySelector(".roulette-container")?.appendChild(crown);
        }
     }
 }
