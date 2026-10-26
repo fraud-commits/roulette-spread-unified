@@ -15,6 +15,7 @@ body { margin: 0; color: #25292d; font-family: Arial, sans-serif; overflow-x: hi
 .settings select { width: auto; min-width: 150px; }
 .check-setting { white-space: nowrap; }
 .demo-hint { color: #666; }
+.demo-hint { display: none; }
 .view-container { position: relative; width: min(100%, 1080px); min-height: 600px; margin: 0 auto; padding: 22px 10px; }
 .view-container.hide { display: none; }
 .idround { margin: 28px 0 14px; text-align: center; font-size: 26px; font-weight: 500; }

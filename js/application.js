@@ -396,11 +396,11 @@ function detectColumns(sumdata) {
       if (name.indexOf("POSITION") !== -1)                 cols.BetPosition = i;
       else if (name.indexOf("ROUND ID") !== -1)            cols.RoundID = i;
       else if (name.indexOf("TIME") !== -1)                cols.RoundTime = i;
+      else if (name.indexOf("WIN RESULT") !== -1 || name.indexOf("WINNING NUMBER") !== -1 || name.indexOf("WIN NUMBER") !== -1) cols.WinningNumber = i;
       else if (name.indexOf("NET") !== -1 && name.indexOf("EUR") !== -1)   cols.NetEur = i;
-      else if (name.indexOf("NET") !== -1 && (name.indexOf("NAT") !== -1 || name.indexOf("LOCAL") !== -1)) cols.NetNative = i;
+      else if (name.indexOf("NET") !== -1 && (name.indexOf("NAT") !== -1 || name.indexOf("LOCAL") !== -1 || i === 6)) cols.NetNative = i;
       else if (name.indexOf("BET") !== -1 && name.indexOf("EUR") !== -1)   cols.BetEur = i;
-      else if (name.indexOf("BET") !== -1 && (name.indexOf("NAT") !== -1 || name.indexOf("LOCAL") !== -1)) cols.BetNative = i;
-      else if (name.indexOf("WIN") !== -1)                 cols.WinningNumber = i;
+      else if (name.indexOf("BET") !== -1 && (name.indexOf("NAT") !== -1 || name.indexOf("LOCAL") !== -1 || i === 5)) cols.BetNative = i;
    });
 
    CURRENT_COLUMNS = cols;
@@ -480,6 +480,10 @@ function render(sumdata) {
    const betIdx = currencyIndex(worksheetData);   // текущая колонка валюты
    const winIdx = (cols.WinningNumber !== null && worksheetData[0] && cols.WinningNumber < worksheetData[0].length)
                     ? cols.WinningNumber : null;
+   $(".winner-setting").toggle(winIdx !== null);
+   if (winIdx === null) state.showWinner = false;
+   else if (document.getElementById("winnerToggle")) state.showWinner = document.getElementById("winnerToggle").checked;
+   $(".demo-hint").toggle(DEMO !== null);
 
    let lastWinner = null;
 
