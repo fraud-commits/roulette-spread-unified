@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.10",
+   version: "2.6.11",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -283,11 +283,13 @@ function buildDemoData() {
       r[0] = { formattedValue: time };
       r[1] = { formattedValue: rid };
       r[2] = { formattedValue: pos };
-      r[3] = { formattedValue: String(eur), value: eur };
-      r[4] = { formattedValue: String(-eur), value: -eur };
-      r[5] = { formattedValue: String(nat), value: nat };
-      r[6] = { formattedValue: String(-nat), value: -nat };
-      if (DEMO_WIN) r[7] = { formattedValue: win };
+       r[3] = { formattedValue: win };
+       r[4] = { formattedValue: "Roulette European" };
+       r[5] = { formattedValue: "1,320.67", value: 1320.67 };
+       r[6] = { formattedValue: String(eur), value: eur };
+       r[7] = { formattedValue: String(nat), value: nat };
+       r[8] = { formattedValue: String(-eur), value: -eur };
+       r[9] = { formattedValue: String(-nat), value: -nat };
       return r;
    };
 
@@ -339,11 +341,13 @@ function buildDemoData() {
    columns[0] = { fieldName: "Round Time" };
    columns[1] = { fieldName: "Round Id" };
    columns[2] = { fieldName: "Bet Position (R)" };
-   columns[3] = { fieldName: "BET EUR" };
-   columns[4] = { fieldName: "NET EUR" };
-   columns[5] = { fieldName: "BET NAT (LOCAL)" };
-   columns[6] = { fieldName: "NET NAT (LOCAL)" };
-   if (DEMO_WIN) columns[7] = { fieldName: "WINNING NUMBER" };
+    columns[3] = { fieldName: "Win Result" };
+    columns[4] = { fieldName: "Game Type" };
+    columns[5] = { fieldName: "AGG(Title NET)" };
+    columns[6] = { fieldName: "SUM(BET EUR)" };
+    columns[7] = { fieldName: "SUM(BET)" };
+    columns[8] = { fieldName: "SUM(NET EUR)" };
+    columns[9] = { fieldName: "SUM(NET)" };
 
    return { data: rows, columns: columns };
 }
