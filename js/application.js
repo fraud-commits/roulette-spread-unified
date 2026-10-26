@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.2.5",
+   version: "2.2.6",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -121,6 +121,24 @@ const OUTSIDE = {
    "ODD": [790, 420]
 };
 
+/* Tableau can provide either the raw Bet Position or the normalized
+   Bet Position (R). Keep both forms renderable on the same layout. */
+const BET_POSITION_ALIASES = {
+   "DOZEN_FIRST": "FIRST_12",
+   "DOZEN_SECOND": "SECOND_12",
+   "DOZEN_THIRD": "THIRD_12",
+   "LOW": "FIRST_HALF",
+   "HIGH": "SECOND_HALF",
+   "CORNER_0_TO_3": "FIRST_FOUR",
+   "STREET_0_1_2": "TRIO_0_TO_2",
+   "STREET_0_2_3": "TRIO_0_AND_2_AND_3"
+};
+
+function normalizeBetPosition(position) {
+   const value = String(position || "").trim().toUpperCase();
+   return BET_POSITION_ALIASES[value] || value;
+}
+
 /* ------------------------------------------------------------
    ВЫЧИСЛЕНИЕ ПОЗИЦИЙ ФИШЕК
    ------------------------------------------------------------ */
@@ -148,9 +166,10 @@ function insidePos(pos) {
    if (w.zeroBets[pos] !== undefined) return w.zeroBets[pos];
 
    const parts = pos.split("_");
-   const type = parts[0];
+   const type = pos.startsWith("SIX_LINE_") ? "SIX_LINE" : parts[0];
    if (parts.length < 4) return OUTSIDE[pos] || null;
-   const a = Number(parts[1]), b = Number(parts[3]);
+   const numericParts = pos.match(/(?:00|\d+)/g) || [];
+   const a = Number(numericParts[0]), b = Number(numericParts[1]);
    if (isNaN(a) || isNaN(b)) return null;
 
    if (type === "SPLIT")   return splitPos(a, b);
@@ -541,7 +560,7 @@ function render(sumdata) {
    /* --- обход всех строк --- */
    for (let i = 0; i < worksheetData.length; i++) {
       const row = worksheetData[i];
-      const pos = getCellText(row[cols.BetPosition]);
+       const pos = normalizeBetPosition(getCellText(row[cols.BetPosition]));
       const amountCell = row[betIdx];
       const amount = parseDisplayedAmount(amountCell);
 
