@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.1.6",
+   version: "2.1.7",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -803,7 +803,14 @@ function changeToImg() {
 }
 
 function changeToImg2() {
-   const toImgArea = document.getElementById("game-examples");
+   const toImgArea = document.getElementById("sreenshot");
+   const button = document.getElementById("generateButton");
+   if (!toImgArea || !toImgArea.querySelector("canvas")) return;
+   if (button) {
+      if (button.disabled) return;
+      button.disabled = true;
+      button.textContent = "Generating…";
+   }
 
    window.pageYOffset = 0;
    document.documentElement.scrollTop = 0;
@@ -817,18 +824,39 @@ function changeToImg2() {
       width: toImgArea.scrollWidth,
       height: toImgArea.scrollHeight
    }).then(function (canvas) {
-      const sreenshot = document.getElementById("sreenshot");
-      const downloadIcon = document.getElementById("download");
+      const filename = getTimestampedFilename("roulette-spread", "png");
+      const downloadBlob = blob => {
+         if (!blob) return Promise.reject(new Error("Could not create screenshot file"));
+         const url = URL.createObjectURL(blob);
+         const link = document.createElement("a");
+         link.href = url;
+         link.download = filename;
+         link.style.display = "none";
+         document.body.appendChild(link);
+         link.click();
+         link.remove();
+         setTimeout(() => URL.revokeObjectURL(url), 30000);
+      };
 
-      canvas.style.width = "100%";
-      canvas.style.height = "auto";
-      canvas.style.maxWidth = "100%";
-      sreenshot.appendChild(canvas);
-
-      downloadIcon.href = canvas.toDataURL("image/jpeg").replace("image/jpeg", "image/octet-stream");
-      downloadIcon.download = getTimestampedFilename("screenshot", "jpg");
+      if (canvas.toBlob) {
+         return new Promise((resolve, reject) => {
+            canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Could not create screenshot file")), "image/png");
+         }).then(downloadBlob);
+      } else {
+         const link = document.createElement("a");
+         link.href = canvas.toDataURL("image/png");
+         link.download = filename;
+         link.click();
+      }
+   }).catch(function (error) {
+      console.error("Screenshot generation failed:", error);
+      alert("Could not generate the screenshot. Please try again.");
+   }).finally(function () {
+      if (button) {
+         button.disabled = false;
+         button.textContent = "Generate";
+      }
    });
-   document.getElementById("sreenshot").innerHTML = "";
 }
 
 function resetTheImageArea() {

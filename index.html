@@ -17,7 +17,7 @@
     <div class="toolbar-meta">
       <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
       <span>CURRENCY: <b class="cur-label">EUR</b></span>
-      <span>VERSION <b class="version-label">2.1.6</b></span>
+      <span>VERSION <b class="version-label">2.1.7</b></span>
     </div>
   </header>
 
@@ -57,7 +57,7 @@
       <div class="control-btn" data-html2canvas-ignore="true">
         <button class="btn btn-dark btn-sm" type="button" onclick="changeToImg()">Add Example</button>
         <button class="btn btn-dark btn-sm" type="button" onclick="resetTheImageArea()">Restart</button>
-        <button class="btn btn-dark btn-sm" type="button" onclick="changeToImg2()"><a id="download" role="button">Generate</a></button>
+        <button id="generateButton" class="btn btn-dark btn-sm" type="button" onclick="changeToImg2()">Generate</button>
       </div>
       <div id="sreenshot" class="sreenshot"></div>
     </section>
@@ -69,7 +69,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="js/application.js?v=2.1.6"></script>
+  <script src="js/application.js?v=2.1.7"></script>
   <script>
     document.getElementById('wheelSelect').addEventListener('change', function () {
       CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
