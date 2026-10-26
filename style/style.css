@@ -26,7 +26,7 @@ body { margin: 0; color: #25292d; font-family: Arial, sans-serif; overflow-x: hi
 .control-btn { display: flex; gap: 6px; margin-bottom: 12px; }
 #download { color: white; text-decoration: none; }
 .sreenshot { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; overflow: auto; }
-.sreenshot canvas { border: 1px solid #ddd; }
+.sreenshot canvas { display: block; width: auto; height: auto !important; max-width: 100%; border: 1px solid #ddd; object-fit: contain; }
 @media (max-width: 700px) {
   .toolbar { align-items: flex-start; flex-direction: column; gap: 10px; }
   .toolbar-meta { flex-wrap: wrap; gap: 10px; }

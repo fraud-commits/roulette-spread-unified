@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.0.6",
+   version: "2.0.7",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -728,13 +728,11 @@ function getTimestampedFilename(baseName, extension) {
 }
 
 function changeToImg() {
-   let toImgArea, CanvasH, CanvasW;
+   let toImgArea;
    if ($(".container-2").hasClass("hide")) {
       toImgArea = document.getElementById("imgItcontainerem");
-      CanvasH = "470px"; CanvasW = "470px";
    } else {
       toImgArea = document.getElementById("imgItcontainerem2");
-      CanvasW = "1000px"; CanvasH = "480px";
    }
 
    window.pageYOffset = 0;
@@ -748,8 +746,9 @@ function changeToImg() {
       dpi: 144
    }).then(function (canvas) {
       const sreenshot = document.getElementById("sreenshot");
-      canvas.style.width = CanvasW;
-      canvas.style.height = CanvasH;
+      canvas.style.width = Math.min(canvas.width, 1000) + "px";
+      canvas.style.height = "auto";
+      canvas.style.maxWidth = "100%";
       sreenshot.appendChild(canvas);
    });
 }
@@ -773,7 +772,8 @@ function changeToImg2() {
       const downloadIcon = document.getElementById("download");
 
       canvas.style.width = "100%";
-      canvas.style.height = "100%";
+      canvas.style.height = "auto";
+      canvas.style.maxWidth = "100%";
       sreenshot.appendChild(canvas);
 
       downloadIcon.href = canvas.toDataURL("image/jpeg").replace("image/jpeg", "image/octet-stream");
