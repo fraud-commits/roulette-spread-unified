@@ -54,6 +54,10 @@ main { min-height: calc(100vh - 124px); }
 .report-helper-content label { font-weight: 600; }
 .report-helper-content select { max-width: 560px; }
 .report-answer { min-height: 58px; padding: 10px; border: 1px solid var(--lfs-border); border-radius: 8px; background: var(--lfs-row-hover); white-space: pre-line; line-height: 1.5; }
+.report-findings { display: grid; gap: 8px; padding: 10px; }
+.report-finding { display: grid; grid-template-columns: minmax(240px, 42%) 1fr; gap: 12px; padding: 9px 10px; border: 1px solid #EEF2F0; border-radius: 6px; background: #fff; }
+.report-finding strong { color: var(--lfs-text); font-size: 13px; font-weight: 600; }
+.report-finding span { color: var(--lfs-green); font-weight: 600; }
 .report-helper-content small { color: var(--lfs-text-muted); }
 .report-helper-content .btn { width: fit-content; min-height: 34px; padding: 6px 12px; border: 1px solid var(--lfs-border); border-radius: 8px; color: var(--lfs-text); background: #fff; font-size: 13px; font-weight: 600; transition: all .15s ease; }
 .report-helper-content .btn:hover:not(:disabled) { border-color: var(--lfs-green); color: var(--lfs-green); background: var(--lfs-mint); }
