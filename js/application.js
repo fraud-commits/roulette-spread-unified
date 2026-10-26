@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.1.5",
+   version: "2.1.6",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -727,7 +727,10 @@ function drawRadar(labels, data) {
                ticks: { color: transparent }
             }
          },
-         plugins: { legend: { display: false } },
+         plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+         },
          scale: {
             maintainAspectRaito: false,
             ticks: { beginAtZero: true, fontColor: "transparent", showLabelBackdrop: false },
