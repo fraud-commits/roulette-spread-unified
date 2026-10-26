@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roulette Spread — Unified</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style/style.css?v=2.6.5">
+  <link rel="stylesheet" href="style/style.css?v=2.6.6">
 </head>
 <body>
   <header class="toolbar">
@@ -26,7 +26,7 @@
       </div>
       <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
       <span>CURRENCY: <b class="cur-label">EUR</b></span>
-      <span>VERSION <b class="version-label">2.6.5</b></span>
+      <span>VERSION <b class="version-label">2.6.6</b></span>
     </div>
   </header>
 
@@ -46,11 +46,6 @@
     <label class="check-setting winner-setting"><input id="winnerToggle" type="checkbox" checked> Highlight winning number</label>
     <label class="check-setting"><input id="chipValueToggle" type="checkbox" checked> Show chip values</label>
   </nav>
-
-  <details class="column-test" data-html2canvas-ignore="true">
-    <summary>Column detection test</summary>
-    <pre id="columnTestOutput">Waiting for Tableau worksheet data…</pre>
-  </details>
 
   <details class="report-helper" data-html2canvas-ignore="true">
     <summary>Roulette report helper</summary>
@@ -91,13 +86,18 @@
     </section>
   </main>
 
+  <details class="column-test" data-html2canvas-ignore="true">
+    <summary>Column detection test</summary>
+    <pre id="columnTestOutput">Waiting for Tableau worksheet data…</pre>
+  </details>
+
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.2.1/chart.min.js"></script>
   <script src="js/tableau-extensions-1.0.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="js/application.js?v=2.6.5"></script>
+  <script src="js/application.js?v=2.6.6"></script>
   <script>
     document.getElementById('wheelSelect').addEventListener('change', function () {
       CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
