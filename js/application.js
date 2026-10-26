@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.2.3",
+   version: "2.2.4",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -427,8 +427,17 @@ function detectColumns(sumdata) {
       else if (name.indexOf("NET") !== -1 && name.indexOf("EUR") !== -1)   cols.NetEur = i;
       else if (name.indexOf("NET") !== -1 && (name.indexOf("NAT") !== -1 || name.indexOf("LOCAL") !== -1 || i === 6)) cols.NetNative = i;
       else if (name.indexOf("BET") !== -1 && name.indexOf("EUR") !== -1)   cols.BetEur = i;
-      else if (name.indexOf("BET") !== -1 && (name.indexOf("NAT") !== -1 || name.indexOf("LOCAL") !== -1 || i === 5)) cols.BetNative = i;
+       else if (name.indexOf("BET") !== -1 && name.indexOf("NET") === -1 && (name === "BET" || name.indexOf("NAT") !== -1 || name.indexOf("LOCAL") !== -1 || i === 5)) cols.BetNative = i;
    });
+
+   // Some Tableau summaries omit hidden columns such as Round Time. In that
+   // case the native amount is usually captioned simply "BET". Never let a
+   // NET column become the Native bet amount just because its index shifted.
+   const nativeBet = src.findIndex(c => {
+      const name = String(c.fieldName || c.caption || c.name || "").trim().toUpperCase().replace(/\s+/g, " ");
+      return /^BET(?: |$)/.test(name) && !/^NET(?: |$)/.test(name) && !/EUR/.test(name);
+   });
+   if (nativeBet !== -1) cols.BetNative = nativeBet;
 
    CURRENT_COLUMNS = cols;
    return cols;
