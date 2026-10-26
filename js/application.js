@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.1.7",
+   version: "2.1.8",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -764,6 +764,7 @@ function changeToImg() {
       taintTest: false,
       type: "view",
       dpi: 144,
+      scale: 2,
       onclone: function (clonedDocument) {
          const clonedArea = clonedDocument.getElementById(toImgArea.id);
          if (!clonedArea) return;
@@ -821,6 +822,7 @@ function changeToImg2() {
       taintTest: false,
       type: "view",
       dpi: 144,
+      scale: 2,
       width: toImgArea.scrollWidth,
       height: toImgArea.scrollHeight
    }).then(function (canvas) {
