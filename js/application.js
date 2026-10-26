@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.30",
+   version: "2.6.31",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1260,9 +1260,8 @@ function changeToImg() {
           const context = canvas.getContext("2d");
           context.save();
           context.translate(crownX, crownY);
-          context.fillStyle = "#00B28F";
-          context.strokeStyle = "#008F77";
-          context.lineWidth = 1.2 * scale;
+          context.strokeStyle = "#00B28F";
+          context.lineWidth = 1.7 * scale;
           context.lineJoin = "round";
           context.lineCap = "round";
           context.beginPath();
@@ -1274,10 +1273,9 @@ function changeToImg() {
           context.lineTo(9 * scale, 8 * scale);
           context.lineTo(-9 * scale, 8 * scale);
           context.closePath();
-          context.fill();
           context.beginPath();
-          context.moveTo(-9 * scale, 5 * scale);
-          context.lineTo(9 * scale, 5 * scale);
+          context.moveTo(-9 * scale, 8 * scale);
+          context.lineTo(9 * scale, 8 * scale);
           context.stroke();
           context.restore();
        }
