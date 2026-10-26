@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.4.1",
+   version: "2.4.3",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -346,11 +346,21 @@ $(document).ready(function () {
    }
 
    /* ---- переключатели ---- */
-   $(".mode-switch").click(function () {
-      $(".container-2").toggleClass("hide");
-      $(".container").toggleClass("hide");
-      requestAnimationFrame(fitLayoutCanvas);
-   });
+    window.setViewMode = function (isLayout) {
+       $(".container-2").toggleClass("hide", !isLayout);
+       $(".container").toggleClass("hide", isLayout);
+       $(".mode-switch").prop("checked", isLayout);
+       $(".example-mode-switch").prop("checked", isLayout);
+       requestAnimationFrame(fitLayoutCanvas);
+    }
+
+    $(".mode-switch").click(function () {
+       window.setViewMode(this.checked);
+    });
+
+    $(".example-mode-switch").click(function () {
+       window.setViewMode(this.checked);
+    });
 
    $(".mode-switch-2").click(function () {          // Native <-> Euro
       state.currency = state.currency === "EUR" ? "NATIVE" : "EUR";
@@ -458,15 +468,24 @@ function detectColumns(sumdata) {
    });
    if (nativeBet !== -1) cols.BetNative = nativeBet;
 
-   // Winning number is optional and its caption is not stable. The Tableau
-   // layout order is stable: it follows Native NET. Accept it only when the
-   // candidate column contains roulette values (0–36 or 00), so Game Type is
-   // never mistaken for a winning number.
-   if (cols.WinningNumber === null && sumdata.data && sumdata.data.length) {
-      const candidate = Math.max(cols.NetNative, cols.NetEur) + 1;
-      const values = sumdata.data.slice(0, 100).map(row => getCellText(row[candidate])).filter(Boolean);
-      const rouletteValues = values.filter(value => /^(?:00|[0-9]|[1-2][0-9]|3[0-6])$/.test(value));
-      if (values.length && rouletteValues.length / values.length >= .6) cols.WinningNumber = candidate;
+   // Winning number is determined by worksheet order, not by its caption.
+   // In the supplied work sheet it is immediately after Native NET (index 7).
+   // Validate the values so a layout without Win Result is still supported.
+   if (sumdata.data && sumdata.data.length) {
+      const candidates = [...new Set([
+         Math.max(cols.NetNative, cols.NetEur) + 1,
+         CONFIG.columns.NetNative + 1,
+         7
+      ])];
+      cols.WinningNumber = null;
+      for (const candidate of candidates) {
+         const values = sumdata.data.slice(0, 100).map(row => getCellText(row[candidate])).filter(Boolean);
+         const rouletteValues = values.filter(value => /^(?:00|[0-9]|[1-2][0-9]|3[0-6])$/.test(value));
+         if (values.length && rouletteValues.length / values.length >= .6) {
+            cols.WinningNumber = candidate;
+            break;
+         }
+      }
    }
 
    CURRENT_COLUMNS = cols;
@@ -527,8 +546,12 @@ function getSelectedRoundIds(selectedMarks, summary) {
    const summaryCols = summary ? detectColumns(summary) : CONFIG.columns;
    const knownIds = new Set((summary && summary.data ? summary.data : []).map(row => getCellText(row[summaryCols.RoundID])).filter(Boolean));
    selectedMarks.data.forEach(table => {
-      const columns = table.columns || [];
-      const rows = Array.isArray(table.data) ? table.data : [];
+      const columns = table && table.columns ? table.columns : [];
+      let rows = table && Array.isArray(table.data) ? table.data : [];
+      // Tableau can return a mark table as an array of cell arrays, or wrap
+      // the rows one level deeper. Normalize both forms before matching IDs.
+      if (rows.length && !Array.isArray(rows[0]) && rows[0] && Array.isArray(rows[0].data)) rows = rows[0].data;
+      if (rows.length && !Array.isArray(rows[0]) && rows[0] && (rows[0].formattedValue !== undefined || rows[0].value !== undefined)) rows = [rows];
       let index = columns.findIndex(c => /ROUND\s*ID/i.test(String(c.fieldName || c.fieldCaption || c.caption || c.name || "")));
       if (index === -1 && rows.length && knownIds.size) {
          let bestCount = 0;
@@ -536,6 +559,7 @@ function getSelectedRoundIds(selectedMarks, summary) {
             const count = rows.filter(row => knownIds.has(getCellText(row[i]))).length;
             if (count > bestCount) { bestCount = count; index = i; }
          }
+         if (bestCount === 0) index = -1;
       }
       if (index === -1) index = CONFIG.columns.RoundID;
       rows.forEach(row => {
@@ -762,6 +786,15 @@ function parseRoundDate(value) {
 function makeTitle(worksheetData, RoundID, RoundTime) {
    const roundIds = new Set(worksheetData.map(row => getCellText(row[RoundID])).filter(Boolean));
    const isLayout = $(".container").hasClass("hide");
+
+   // A selected round must take priority over the date label. The old tool
+   // displayed the selected Round Id directly; checking dates first caused
+   // the unified version to show only 26.10.2026.
+   if (roundIds.size === 1) {
+      const roundId = Array.from(roundIds)[0];
+      return isLayout ? "Round: " + roundId + " Bet Spread" : "Round: " + roundId + " Straight-Up Bet Spread";
+   }
+
    const dates = worksheetData
       .map(row => parseRoundDate(getCellText(row[RoundTime])))
       .filter(Boolean)
@@ -776,10 +809,6 @@ function makeTitle(worksheetData, RoundID, RoundTime) {
          : `${dateLabel} Straight-Up Bet${minDate === maxDate ? "" : " Wheel"} Spread`;
    }
 
-   if (roundIds.size === 1) {
-      const roundId = Array.from(roundIds)[0];
-      return isLayout ? "Round: " + roundId + " Bet Spread" : "Round: " + roundId + " Straight-Up Bet Spread";
-   }
    if (roundIds.size > 1) return isLayout ? "All Bets — Roulette Layout" : "All Straight-Up Bets";
    const roundId = getCellText(worksheetData[0][RoundID]);
    return isLayout ? "Game Round: " + roundId + " Layout Spread" : "Game Round: " + roundId + " Straight-Up Bet Spread";
@@ -875,8 +904,10 @@ function getTimestampedFilename(baseName, extension) {
 }
 
 function changeToImg() {
-   const isLayout = !$(".container-2").hasClass("hide");
-   const toImgArea = document.getElementById(isLayout ? "imgItcontainerem2" : "imgItcontainerem");
+    const exampleSwitch = document.querySelector(".example-mode-switch");
+    const isLayout = exampleSwitch ? exampleSwitch.checked : !$(".container-2").hasClass("hide");
+    if (exampleSwitch && window.setViewMode) window.setViewMode(isLayout);
+    const toImgArea = document.getElementById(isLayout ? "imgItcontainerem2" : "imgItcontainerem");
 
     html2canvas(toImgArea, {
       allowTaint: true,

@@ -74,7 +74,9 @@ main { min-height: calc(100vh - 124px); }
 .layout-container { display: flex; justify-content: center; width: min(100%, 1143px); margin: 0 auto; overflow: hidden; }
 #RouletteLayout { display: block; flex: 0 0 auto; width: 100%; height: auto; max-width: 1143px; background-repeat: no-repeat; background-position: center; background-size: 100% 100%; }
 .examples { min-height: 180px; padding: 12px 20px 20px; }
-.control-btn { display: flex; gap: 8px; margin-bottom: 12px; }
+.control-btn { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.example-view-switch { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 10px; border: 1px solid var(--lfs-border); border-radius: 8px; color: var(--lfs-text-muted); background: #fff; font-size: 11px; font-weight: 700; letter-spacing: .02em; }
+.example-view-switch .switch { transform: scale(.82); transform-origin: center; }
 .control-btn .btn { min-height: 36px; padding: 7px 14px; border: 1px solid var(--lfs-border); border-radius: 8px; color: var(--lfs-text); background: #fff; font-size: 13px; font-weight: 600; transition: all .15s ease; }
 .control-btn .btn:hover { border-color: var(--lfs-green); color: var(--lfs-green); background: var(--lfs-mint); }
 .control-btn .btn:first-child { border-color: var(--lfs-green); color: #fff; background: var(--lfs-green); }
