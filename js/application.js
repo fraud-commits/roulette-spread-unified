@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.5.0",
+   version: "2.5.1",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -446,27 +446,37 @@ function detectColumns(sumdata) {
    const cols = Object.assign({}, CONFIG.columns);   // стартуем с дефолтов
    const src = sumdata.columns || [];
 
+   // Remove aggregation wrappers such as SUM(BET) and normalise spacing.
+   // Native fields must be exactly BET/NET (optionally NATIVE/LOCAL). A
+   // helper column like "Title NET" must never be treated as a native value.
+   const normalizeName = c => String(c.fieldName || c.caption || c.name || "")
+      .trim().toUpperCase().replace(/\s+/g, " ")
+      .replace(/^(?:SUM|AVG|MIN|MAX|AGG|CNT|ATTR)\((.*)\)$/, "$1");
+
    src.forEach((c, i) => {
-      const name = String(c.fieldName || c.caption || c.name || "").toUpperCase();
+      const name = normalizeName(c);
       if (!name) return;
       if (name.indexOf("POSITION") !== -1)                 cols.BetPosition = i;
       else if (name.indexOf("ROUND ID") !== -1)            cols.RoundID = i;
       else if (name.indexOf("TIME") !== -1)                cols.RoundTime = i;
        else if (name === "WIN" || name.indexOf("WIN RESULT") !== -1 || name.indexOf("WINNING NUMBER") !== -1 || name.indexOf("WIN NUMBER") !== -1) cols.WinningNumber = i;
       else if (name.indexOf("NET") !== -1 && name.indexOf("EUR") !== -1)   cols.NetEur = i;
-      else if (name.indexOf("NET") !== -1 && (name.indexOf("NAT") !== -1 || name.indexOf("LOCAL") !== -1 || i === 6)) cols.NetNative = i;
+      else if (name === "NET" || (/^NET(?:\s|$)/.test(name) && (name.indexOf("NAT") !== -1 || name.indexOf("LOCAL") !== -1))) cols.NetNative = i;
       else if (name.indexOf("BET") !== -1 && name.indexOf("EUR") !== -1)   cols.BetEur = i;
-       else if (name.indexOf("BET") !== -1 && name.indexOf("NET") === -1 && (name === "BET" || name.indexOf("NAT") !== -1 || name.indexOf("LOCAL") !== -1 || i === 5)) cols.BetNative = i;
+       else if (name === "BET" || (/^BET(?:\s|$)/.test(name) && name !== "BET POSITION" && (name.indexOf("NAT") !== -1 || name.indexOf("LOCAL") !== -1))) cols.BetNative = i;
    });
 
-   // Some Tableau summaries omit hidden columns such as Round Time. In that
-   // case the native amount is usually captioned simply "BET". Never let a
-   // NET column become the Native bet amount just because its index shifted.
-   const nativeBet = src.findIndex(c => {
-      const name = String(c.fieldName || c.caption || c.name || "").trim().toUpperCase().replace(/\s+/g, " ");
-      return /^BET(?: |$)/.test(name) && !/^NET(?: |$)/.test(name) && !/EUR/.test(name);
-   });
-   if (nativeBet !== -1) cols.BetNative = nativeBet;
+   // Validate with data: a native amount column must be numeric. This guards
+   // against positional fallbacks catching helper columns (e.g. Title NET).
+   const numericColumn = idx => {
+      if (idx === null || idx === undefined || !sumdata.data || !sumdata.data.length) return false;
+      const values = sumdata.data.slice(0, 100).map(row => row[idx]).filter(cell => getCellText(cell) !== "");
+      if (!values.length) return false;
+      const numeric = values.filter(cell => Number.isFinite(Number(cell.value !== undefined ? cell.value : parseDisplayedAmount(cell)))).length;
+      return numeric / values.length >= .6;
+   };
+   if (!numericColumn(cols.BetNative)) cols.BetNative = numericColumn(CONFIG.columns.BetNative) ? CONFIG.columns.BetNative : cols.BetEur;
+   if (!numericColumn(cols.NetNative))  cols.NetNative = numericColumn(CONFIG.columns.NetNative) ? CONFIG.columns.NetNative : cols.NetEur;
 
    // Winning number is determined by worksheet order, not by its caption.
    // In the supplied work sheet it is immediately after Native NET (index 7).
