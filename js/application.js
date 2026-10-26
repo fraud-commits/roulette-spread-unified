@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.6",
+   version: "2.6.7",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -926,6 +926,7 @@ function drawRadar(labels, data) {
       },
       options: {
          layout: { padding: { left: 40, right: 40, top: 30, bottom: 40 } },
+         interaction: { mode: "nearest", intersect: true },
          pointRadius: 4,
          elements: { line: { borderWidth: 4 } },
          scales: {
@@ -941,6 +942,9 @@ function drawRadar(labels, data) {
             legend: { display: false },
              tooltip: {
                 enabled: true,
+                mode: "nearest",
+                intersect: true,
+                filter: item => Number(item.raw) > 0,
                 backgroundColor: "rgba(255,255,255,.97)",
                 titleColor: "#1D2B27",
                 bodyColor: "#008F77",
