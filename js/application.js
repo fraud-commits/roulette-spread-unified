@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.20",
+   version: "2.6.21",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1138,7 +1138,7 @@ function changeToImg() {
       type: "view",
       dpi: 144,
         scale: 2,
-       backgroundColor: null,
+       backgroundColor: "#ffffff",
       onclone: function (clonedDocument) {
          const clonedArea = clonedDocument.getElementById(toImgArea.id);
          if (!clonedArea) return;
@@ -1150,7 +1150,7 @@ function changeToImg() {
           clonedArea.style.border = "0";
           clonedArea.style.borderRadius = "0";
           clonedArea.style.boxShadow = "none";
-           clonedArea.style.background = "transparent";
+           clonedArea.style.background = "#ffffff";
           clonedArea.style.setProperty("width", isLayout ? "1000px" : "500px", "important");
           clonedArea.style.setProperty("min-width", "0", "important");
           clonedArea.style.setProperty("max-width", "none", "important");
@@ -1225,10 +1225,17 @@ function changeToImg() {
           const top = Math.max(0, minY - padding);
           const right = Math.min(canvas.width, maxX + padding + 1);
           const bottom = Math.min(canvas.height, maxY + padding + 1);
+          const contentWidth = right - left;
+          const contentHeight = bottom - top;
+          const targetWidth = (isLayout ? 1000 : 500) * 2;
           const cropped = document.createElement("canvas");
-          cropped.width = right - left;
-          cropped.height = bottom - top;
-          cropped.getContext("2d").drawImage(canvas, left, top, cropped.width, cropped.height, 0, 0, cropped.width, cropped.height);
+          cropped.width = Math.max(targetWidth, contentWidth);
+          cropped.height = contentHeight;
+          const croppedContext = cropped.getContext("2d");
+          croppedContext.fillStyle = "#ffffff";
+          croppedContext.fillRect(0, 0, cropped.width, cropped.height);
+          croppedContext.drawImage(canvas, left, top, contentWidth, contentHeight,
+             Math.round((cropped.width - contentWidth) / 2), 0, contentWidth, contentHeight);
           canvas = cropped;
        }
        const sreenshot = document.getElementById("sreenshot");
