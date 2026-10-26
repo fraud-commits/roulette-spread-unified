@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.9",
+   version: "2.6.10",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -657,11 +657,14 @@ function render(sumdata) {
     const betIdx = currencyIndex(worksheetData);   // текущая колонка валюты
     const displayedRounds = new Set(worksheetData.map(row => getCellText(row[RoundID])).filter(Boolean));
     const singleRound = displayedRounds.size === 1;
-    const winIdx = (singleRound && cols.WinningNumber !== null && worksheetData[0] && cols.WinningNumber < worksheetData[0].length)
-                    ? cols.WinningNumber : null;
-   $(".winner-setting").toggle(winIdx !== null);
-   if (winIdx === null) state.showWinner = false;
-   else if (document.getElementById("winnerToggle")) state.showWinner = document.getElementById("winnerToggle").checked;
+    const hasWinColumn = cols.WinningNumber !== null && worksheetData[0] && cols.WinningNumber < worksheetData[0].length;
+    const winIdx = (singleRound && hasWinColumn) ? cols.WinningNumber : null;
+    const winnerToggle = document.getElementById("winnerToggle");
+    $(".winner-setting").toggle(!!hasWinColumn);
+    if (winnerToggle) {
+       winnerToggle.disabled = !singleRound;
+       state.showWinner = singleRound && winnerToggle.checked;
+    }
 
    let lastWinner = null;
 
