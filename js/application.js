@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.0.4",
+   version: "2.0.5",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -604,13 +604,12 @@ function breakDelta(startStr, endStr) {
 /* Заголовок сверху */
 function makeTitle(worksheetData, RoundID, Sequential) {
    const w = state.wheel === "AMERICAN" ? "American" : "European";
-   const cur = state.currency === "NATIVE" ? "Native Currency" : "Euro Currency";
 
    if ($(".container-2").hasClass("hide") && Sequential < 1) {
       return "Game Round: " + worksheetData[0][RoundID].formattedValue + " Straight-Up Bet Spread";
    }
    if ($(".container").hasClass("hide")) {
-      return "Game Round: " + worksheetData[0][RoundID].formattedValue + " Layout Spread (" + cur + ")";
+      return "Game Round: " + worksheetData[0][RoundID].formattedValue + " Layout Spread";
    }
    if (Sequential > 1) {
       return "Session Straight-Up Bet Spread (" + w + " / " + cur + ")";

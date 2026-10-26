@@ -20,8 +20,8 @@ body { margin: 0; color: #25292d; font-family: Arial, sans-serif; overflow-x: hi
 .break-counter { display: flex; justify-content: center; gap: 16px; margin: 8px 0; font-size: 13px; }
 .roulette-container { width: 470px; height: 470px; margin: 0 auto; }
 #myChart { width: 100% !important; height: 100% !important; background-repeat: no-repeat; background-position: center; background-size: contain; }
-.layout-container { width: min(100%, 1143px); margin: 0 auto; overflow: auto; }
-#RouletteLayout { display: block; width: 1143px; max-width: none; background-repeat: no-repeat; background-position: center; background-size: 100% 100%; }
+.layout-container { width: min(100%, 1143px); margin: 0 auto; overflow: hidden; }
+#RouletteLayout { display: block; width: 100%; height: auto; max-width: 1143px; background-repeat: no-repeat; background-position: center; background-size: 100% 100%; }
 .examples { min-height: 180px; padding: 14px 24px; }
 .control-btn { display: flex; gap: 6px; margin-bottom: 12px; }
 #download { color: white; text-decoration: none; }
