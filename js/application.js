@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.51",
+   version: "2.6.52",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -484,11 +484,7 @@ function getSettings() {
 
 function getDataWorksheet(worksheets) {
    if (!worksheets || !worksheets.length) return null;
-   // Keep the configured name first, but support the original workbook name
-   // and dashboards where the data sheet is the only available worksheet.
-   return worksheets.find(sheet => sheet.name === CONFIG.worksheetName)
-      || worksheets.find(sheet => sheet.name === "work2")
-      || worksheets[0];
+   return worksheets.find(sheet => sheet.name === CONFIG.worksheetName) || null;
 }
 
 /* ------------------------------------------------------------
