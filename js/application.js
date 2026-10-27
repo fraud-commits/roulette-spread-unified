@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.61",
+   version: "2.6.62",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -893,10 +893,16 @@ function render(sumdata) {
 
    let lastWinner = null;
 
-   if (!worksheetData.length) {
-      $(".idround").text("No data");
-      $(".skipcnt").text(0); $(".shortcnt").text(0); $(".longcnt").text(0);
-      return;
+    if (!worksheetData.length) {
+       $(".idround").text("No data");
+       $(".skipcnt").text(0); $(".shortcnt").text(0); $(".longcnt").text(0);
+       window.__roulettePlayerId = "";
+       if (winnerToggle) {
+          winnerToggle.disabled = true;
+          state.showWinner = false;
+       }
+       drawRadar(order, data, null);
+       return;
    }
 
     /* --- обход всех строк --- */
