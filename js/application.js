@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.46",
+   version: "2.6.47",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -579,18 +579,21 @@ function detectColumns(sumdata) {
        const moneyNames = moneyColumns.map(index => String(
           src[index]?.fieldName || src[index]?.fieldCaption || src[index]?.caption || src[index]?.name || ""
        ).toUpperCase());
-       const findMoney = (kind, currency) => {
-          const index = moneyNames.findIndex(name => name.includes(kind) && name.includes(currency));
-          return index >= 0 ? moneyColumns[index] : null;
-       };
+        const findMoney = (kind, currencies) => {
+           const acceptedCurrencies = Array.isArray(currencies) ? currencies : [currencies];
+           const index = moneyNames.findIndex(name => name.includes(kind) && acceptedCurrencies.some(currency => name.includes(currency)));
+           return index >= 0 ? moneyColumns[index] : null;
+        };
        const findNativeMoney = kind => {
           const index = moneyNames.findIndex(name => name.includes(kind) && !name.includes("EUR") && !name.includes("USD"));
           return index >= 0 ? moneyColumns[index] : null;
        };
        const explicit = {
-          BetEur: findMoney("BET", "EUR"),
-          BetNative: findNativeMoney("BET"),
-          NetEur: findMoney("NET", "EUR"),
+           // EUR and USD are both foreign-currency columns in the source
+           // worksheet; use either one for the non-native currency slot.
+           BetEur: findMoney("BET", ["EUR", "USD"]),
+           BetNative: findNativeMoney("BET"),
+           NetEur: findMoney("NET", ["EUR", "USD"]),
           NetNative: findNativeMoney("NET")
        };
        if (Object.values(explicit).every(index => index !== null)) {
