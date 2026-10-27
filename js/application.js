@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.62",
+   version: "2.6.64",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -529,8 +529,9 @@ function refreshData() {
 
 function normalizePlayerId(value) {
    let normalized = String(value || "").trim().toLowerCase();
-   if (normalized.includes(":")) normalized = normalized.slice(normalized.lastIndexOf(":") + 1);
-   normalized = normalized.replace(/[^a-z0-9_.-]+/g, "");
+   // The complete Tableau token is the Player ID. Keep every segment,
+   // including colons, so it is compared as one complete identifier.
+   normalized = normalized.replace(/[^a-z0-9_.:-]+/g, "");
    return normalized.replace(/\.0+$/, "");
 }
 
