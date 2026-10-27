@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.45",
+   version: "2.6.46",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1024,16 +1024,22 @@ function drawWinnerChip(context, x, y) {
        ? 75
        : cellCentersX.reduce((closest, value) => Math.abs(value - (x + 11.5)) < Math.abs(closest - (x + 11.5)) ? value : closest, cellCentersX[0]);
     const centerY = cellCentersY[y] ?? (y + 15);
+    const drawCellOutline = () => {
+       if (x === 60) context.strokeRect(37, 21, 76, 297);
+       else context.strokeRect(centerX - 38.5, centerY - 49, 77, 98);
+    };
+    context.save();
+    context.globalCompositeOperation = "destination-over";
+    context.strokeStyle = "rgba(0, 244, 187, .55)";
+    context.lineWidth = 4;
+    context.shadowColor = "rgba(0, 244, 187, .55)";
+    context.shadowBlur = 10;
+    drawCellOutline();
+    context.restore();
     context.save();
     context.strokeStyle = "#00F4BB";
-    context.lineWidth = 4;
-    context.shadowColor = "rgba(0, 244, 187, .68)";
-    context.shadowBlur = 14;
-    if (x === 60) {
-       context.strokeRect(37, 21, 76, 297);
-    } else {
-       context.strokeRect(centerX - 38.5, centerY - 49, 77, 98);
-    }
+    context.lineWidth = 3;
+    drawCellOutline();
     context.restore();
 }
 
