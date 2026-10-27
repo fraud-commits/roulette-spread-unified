@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.65",
+   version: "2.6.66",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -621,7 +621,9 @@ function detectColumns(sumdata) {
        ?? Array.from({ length: columnCount }, (_, index) => index).find(index => {
           const values = sampleRows.map(row => getCellText(row[index])).filter(Boolean);
           if (!values.length || new Set(values).size / values.length > .25) return false;
-          return values.every(value => /^\d{5,}$/.test(value) || (value.includes(":") && /^[a-z0-9_.:-]{8,}$/i.test(value)));
+          return values.every(value => /^\d{5,}$/.test(value)
+             || /^[a-z][a-z0-9]*[_-]\d{4,}$/i.test(value)
+             || (value.includes(":") && /^[a-z0-9_.:-]{8,}$/i.test(value)));
        });
     if (playerIdCandidate !== undefined) cols.PlayerID = playerIdCandidate;
    const numericRate = index => {
