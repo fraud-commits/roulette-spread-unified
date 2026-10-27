@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.49",
+   version: "2.6.50",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -494,7 +494,8 @@ function updateBackgrounds() {
 function updateWheelLabel() { $(".wheel-label").text(state.wheel === "AMERICAN" ? "AMERICAN" : "EUROPEAN"); }
 
 function updateCurrencyLabels() {
-   $(".cur-label").text(state.currency === "NATIVE" ? "NATIVE" : "EUR");
+   const label = state.currency === "NATIVE" ? "NATIVE" : "EUR";
+   $(".cur-label, .examples-cur-label").text(label);
 }
 
 /* ------------------------------------------------------------
@@ -1217,22 +1218,6 @@ function changeToImg() {
              title.style.height = "auto";
              title.style.fontSize = isLayout ? "26px" : "22px";
           }
-          // Keep the currency label out of the editable title/header area.
-          // It is placed on its own line in the saved example instead of
-          // overlaying long session names.
-          const currencyBadge = clonedDocument.createElement("span");
-          currencyBadge.textContent = "CURRENCY: " + (state.currency === "NATIVE" ? "NATIVE" : "EUR");
-          currencyBadge.style.alignSelf = "flex-end";
-          currencyBadge.style.margin = "-4px 0 8px";
-          currencyBadge.style.padding = "4px 7px";
-          currencyBadge.style.border = "1px solid #C8DED5";
-          currencyBadge.style.borderRadius = "5px";
-          currencyBadge.style.color = "#008F77";
-          currencyBadge.style.background = "#F3FAF7";
-          currencyBadge.style.font = "600 10px Arial, sans-serif";
-          currencyBadge.style.letterSpacing = ".03em";
-          clonedArea.insertBefore(currencyBadge, title || clonedArea.firstChild);
-
           if (isLayout) {
              const wrapper = clonedArea.querySelector(".layout-container");
              const layoutCanvas = clonedArea.querySelector("#RouletteLayout");
