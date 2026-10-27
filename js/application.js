@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.37",
+   version: "2.6.38",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -387,7 +387,8 @@ $(document).ready(function () {
        $(".container-2").toggleClass("hide", !isLayout);
        $(".container").toggleClass("hide", isLayout);
        $(".mode-switch").prop("checked", isLayout);
-       $(".example-mode-switch").prop("checked", isLayout);
+        $(".example-mode-switch").prop("checked", isLayout);
+        $("#wheelFilterReminder").prop("hidden", isLayout);
      requestAnimationFrame(fitLayoutCanvas);
      requestAnimationFrame(fitWheelCanvas);
     setupLayoutHover();
