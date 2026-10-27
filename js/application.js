@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.56",
+   version: "2.6.57",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -235,6 +235,7 @@ const state = {
 /* Псевдонимы (аналоги старых глобальных имён, чтобы менеджер не ругался) */
 let currency = CONFIG.currency;               // для совместимости со старым кодом
 let CURRENT_COLUMNS = Object.assign({}, CONFIG.columns);   // колонки после autodetect
+let playerParameterTimer = null;
 
 let unregisterFilterEventListener = null;
 let unregisterMarkSelectionEventListener = null;
@@ -368,9 +369,10 @@ $(document).ready(function () {
 
    if (typeof tableau !== "undefined" && tableau.extensions) {
       tableau.extensions.initializeAsync().then(function () {
-         state.tableauReady = true;
-         getSettings();
-         drawChartJS();
+          state.tableauReady = true;
+          getSettings();
+          drawChartJS();
+          startPlayerParameterWatch();
          // После изменения настроек дашборда перерисовать:
          unregisterSettingsEventListener =
             tableau.extensions.settings.addEventListener(tableau.TableauEventType.SettingsChanged, () => {
@@ -524,6 +526,40 @@ function refreshData() {
       });
 }
 
+function normalizePlayerId(value) {
+   let normalized = String(value || "").trim().toLowerCase();
+   if (normalized.includes(":")) normalized = normalized.slice(normalized.lastIndexOf(":") + 1);
+   return normalized.replace(/[^a-z0-9_.-]+/g, "");
+}
+
+function setPlayerMismatch(isMismatch) {
+   const button = document.getElementById("refreshButton");
+   if (!button) return;
+   button.classList.toggle("player-mismatch", Boolean(isMismatch));
+   button.title = isMismatch ? "Player ID does not match Tableau filter. Click Refresh." : "Refresh worksheet data";
+}
+
+function checkPlayerParameter() {
+   const dashboard = typeof tableau !== "undefined" && tableau.extensions?.dashboardContent?.dashboard;
+   if (!state.tableauReady || !dashboard) return;
+   dashboard.getParametersAsync().then(parameters => {
+      const parameter = (parameters || []).find(item => {
+         const name = String(item.name || "");
+         return /player|user/i.test(name) && /id|filter/i.test(name);
+      });
+      const visibleId = normalizePlayerId(document.getElementById("playerIdLabel")?.textContent);
+      const value = parameter?.currentValue?.formattedValue ?? parameter?.currentValue?.value ?? parameter?.value;
+      const tableauId = normalizePlayerId(value);
+      setPlayerMismatch(Boolean(visibleId && tableauId && visibleId !== tableauId));
+   }).catch(() => setPlayerMismatch(false));
+}
+
+function startPlayerParameterWatch() {
+   if (playerParameterTimer) clearInterval(playerParameterTimer);
+   checkPlayerParameter();
+   playerParameterTimer = setInterval(checkPlayerParameter, 5000);
+}
+
 function updateWheelLabel() { $(".wheel-label").text(state.wheel === "AMERICAN" ? "AMERICAN" : "EUROPEAN"); }
 
 function updateCurrencyLabels() {
@@ -572,6 +608,9 @@ function detectColumns(sumdata) {
     const columnName = index => String(
        src[index]?.fieldName || src[index]?.fieldCaption || src[index]?.caption || src[index]?.name || ""
     ).toUpperCase();
+    const playerIdCandidate = Array.from({ length: columnCount }, (_, index) => index)
+       .find(index => /PLAYER\s*ID|USER\s*ID/.test(columnName(index)));
+    if (playerIdCandidate !== undefined) cols.PlayerID = playerIdCandidate;
    const numericRate = index => {
       const values = sampleRows.map(row => row[index]).filter(cell => getCellText(cell) !== "");
       if (!values.length) return 0;
@@ -785,8 +824,11 @@ function getSelectedRoundIds(selectedMarks, summary) {
 function render(sumdata) {
    let worksheetData = sumdata.data;
    const cols = detectColumns(sumdata);
+   const playerLabel = document.getElementById("playerIdLabel");
+   const playerCell = cols.PlayerID !== undefined && worksheetData[0] ? worksheetData[0][cols.PlayerID] : null;
+   if (playerLabel) playerLabel.textContent = playerCell ? getCellText(playerCell) : "—";
 
-   const RoundTime = cols.RoundTime,
+    const RoundTime = cols.RoundTime,
          RoundID = cols.RoundID;
 
    const canvas = document.getElementById("RouletteLayout");

@@ -46,7 +46,9 @@ button, select, summary, input { accent-color: var(--lfs-green); }
 .refresh-button:disabled { opacity: .65; cursor: wait; }
 .refresh-icon { display: inline-block; margin-right: 4px; font-size: 18px; line-height: 0; vertical-align: -1px; }
 .refresh-button.is-refreshing .refresh-icon { animation: refresh-spin .8s linear infinite; }
+.refresh-button.player-mismatch { border-color: #E2A900; color: #8A6200; background: #FFF8D9; animation: refresh-warning 1.4s ease-in-out infinite; }
 @keyframes refresh-spin { to { transform: rotate(360deg); } }
+@keyframes refresh-warning { 0%, 100% { box-shadow: 0 0 0 0 rgba(226,169,0,.12); } 50% { box-shadow: 0 0 0 5px rgba(226,169,0,.28); } }
 .loading-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; gap: 9px; color: var(--lfs-green); background: rgba(255,255,255,.52); font-size: 13px; font-weight: 700; }
 .loading-overlay[hidden] { display: none; }
 .loading-spinner { width: 18px; height: 18px; border: 2px solid #BFD5CC; border-top-color: var(--lfs-green); border-radius: 50%; animation: refresh-spin .8s linear infinite; }
