@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.58",
+   version: "2.6.59",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -519,17 +519,19 @@ function refreshData() {
       .catch(error => console.error("Refresh failed:", error))
       .finally(() => {
          loadOverlay(false);
-         if (button) {
-            button.disabled = false;
-            button.classList.remove("is-refreshing");
-         }
-      });
+          if (button) {
+             button.disabled = false;
+             button.classList.remove("is-refreshing");
+          }
+          checkPlayerParameter();
+       });
 }
 
 function normalizePlayerId(value) {
    let normalized = String(value || "").trim().toLowerCase();
    if (normalized.includes(":")) normalized = normalized.slice(normalized.lastIndexOf(":") + 1);
-   return normalized.replace(/[^a-z0-9_.-]+/g, "");
+   normalized = normalized.replace(/[^a-z0-9_.-]+/g, "");
+   return normalized.replace(/\.0+$/, "");
 }
 
 function setPlayerMismatch(isMismatch) {
@@ -548,7 +550,11 @@ function checkPlayerParameter() {
          return /player|user/i.test(name) && /id|filter/i.test(name);
       });
       const visibleId = normalizePlayerId(window.__roulettePlayerId);
-      const value = parameter?.currentValue?.formattedValue ?? parameter?.currentValue?.value ?? parameter?.value;
+      const currentValue = parameter?.currentValue;
+      const value = Array.isArray(currentValue) ? currentValue[0]
+         : currentValue && typeof currentValue === "object"
+            ? (currentValue.formattedValue ?? currentValue.value)
+            : (currentValue ?? parameter?.value);
       const tableauId = normalizePlayerId(value);
       setPlayerMismatch(Boolean(visibleId && tableauId && visibleId !== tableauId));
    }).catch(() => setPlayerMismatch(false));
