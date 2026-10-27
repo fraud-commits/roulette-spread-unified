@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.48",
+   version: "2.6.49",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1205,17 +1205,33 @@ function changeToImg() {
            clonedArea.style.setProperty("width", isLayout ? "1000px" : "540px", "important");
           clonedArea.style.setProperty("min-width", "0", "important");
           clonedArea.style.setProperty("max-width", "none", "important");
-          clonedArea.style.boxSizing = "border-box";
-          clonedArea.style.display = "flex";
-          clonedArea.style.flexDirection = "column";
-          clonedArea.style.alignItems = "center";
+           clonedArea.style.boxSizing = "border-box";
+           clonedArea.style.display = "flex";
+           clonedArea.style.flexDirection = "column";
+           clonedArea.style.alignItems = "center";
+           clonedArea.style.position = "relative";
 
-         const title = clonedArea.querySelector(".idround");
-         if (title) {
-            title.style.margin = "0 0 10px";
-            title.style.height = "auto";
-            title.style.fontSize = isLayout ? "26px" : "22px";
-         }
+          const title = clonedArea.querySelector(".idround");
+          if (title) {
+             title.style.margin = "0 0 10px";
+             title.style.height = "auto";
+             title.style.fontSize = isLayout ? "26px" : "22px";
+          }
+          // Keep the currency label out of the editable title/header area.
+          // It is placed on its own line in the saved example instead of
+          // overlaying long session names.
+          const currencyBadge = clonedDocument.createElement("span");
+          currencyBadge.textContent = "CURRENCY: " + (state.currency === "NATIVE" ? "NATIVE" : "EUR");
+          currencyBadge.style.alignSelf = "flex-end";
+          currencyBadge.style.margin = "-4px 0 8px";
+          currencyBadge.style.padding = "4px 7px";
+          currencyBadge.style.border = "1px solid #C8DED5";
+          currencyBadge.style.borderRadius = "5px";
+          currencyBadge.style.color = "#008F77";
+          currencyBadge.style.background = "#F3FAF7";
+          currencyBadge.style.font = "600 10px Arial, sans-serif";
+          currencyBadge.style.letterSpacing = ".03em";
+          clonedArea.insertBefore(currencyBadge, title || clonedArea.firstChild);
 
           if (isLayout) {
              const wrapper = clonedArea.querySelector(".layout-container");
