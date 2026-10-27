@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.52",
+   version: "2.6.53",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1364,10 +1364,25 @@ function changeToImg2() {
        width: 2070,
        onclone: function (clonedDocument) {
           const clonedScreenshot = clonedDocument.getElementById("sreenshot");
-          if (clonedScreenshot) {
-             clonedScreenshot.style.zoom = "1";
-             clonedScreenshot.style.width = "2070px";
-          }
+           if (clonedScreenshot) {
+              clonedScreenshot.style.zoom = "1";
+              clonedScreenshot.style.width = "2070px";
+              clonedScreenshot.style.position = "relative";
+              const currencyBadge = clonedDocument.createElement("span");
+              currencyBadge.textContent = "CURRENCY: " + (state.currency === "NATIVE" ? "NATIVE" : "EUR");
+              currencyBadge.style.position = "absolute";
+              currencyBadge.style.top = "10px";
+              currencyBadge.style.right = "18px";
+              currencyBadge.style.zIndex = "10";
+              currencyBadge.style.padding = "5px 8px";
+              currencyBadge.style.border = "1px solid #C8DED5";
+              currencyBadge.style.borderRadius = "6px";
+              currencyBadge.style.color = "#008F77";
+              currencyBadge.style.background = "#F3FAF7";
+              currencyBadge.style.font = "600 11px Arial, sans-serif";
+              currencyBadge.style.letterSpacing = ".03em";
+              clonedScreenshot.appendChild(currencyBadge);
+           }
        }
    }).then(function (canvas) {
        const filename = getTimestampedFilename("roulette-spread", "jpg");
