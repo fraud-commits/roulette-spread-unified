@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.53",
+   version: "2.6.54",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1371,7 +1371,7 @@ function changeToImg2() {
               const currencyBadge = clonedDocument.createElement("span");
               currencyBadge.textContent = "CURRENCY: " + (state.currency === "NATIVE" ? "NATIVE" : "EUR");
               currencyBadge.style.position = "absolute";
-              currencyBadge.style.top = "10px";
+              currencyBadge.style.bottom = "10px";
               currencyBadge.style.right = "18px";
               currencyBadge.style.zIndex = "10";
               currencyBadge.style.padding = "5px 8px";
