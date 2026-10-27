@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.44",
+   version: "2.6.45",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1027,8 +1027,8 @@ function drawWinnerChip(context, x, y) {
     context.save();
     context.strokeStyle = "#00F4BB";
     context.lineWidth = 4;
-    context.shadowColor = "rgba(0, 244, 187, .45)";
-    context.shadowBlur = 10;
+    context.shadowColor = "rgba(0, 244, 187, .68)";
+    context.shadowBlur = 14;
     if (x === 60) {
        context.strokeRect(37, 21, 76, 297);
     } else {
