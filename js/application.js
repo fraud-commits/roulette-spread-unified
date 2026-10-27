@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.32",
+   version: "2.6.33",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1260,6 +1260,7 @@ function changeToImg() {
           const context = canvas.getContext("2d");
           context.save();
           context.translate(crownX, crownY);
+          context.rotate(exportAngle + Math.PI / 2);
           context.strokeStyle = "#00B28F";
           context.lineWidth = 1.7 * scale;
           context.lineJoin = "round";
@@ -1308,7 +1309,7 @@ function changeToImg2() {
       width: toImgArea.scrollWidth,
       height: toImgArea.scrollHeight
    }).then(function (canvas) {
-      const filename = getTimestampedFilename("roulette-spread", "png");
+       const filename = getTimestampedFilename("roulette-spread", "jpg");
       const downloadBlob = blob => {
          if (!blob) return Promise.reject(new Error("Could not create screenshot file"));
          const url = URL.createObjectURL(blob);
@@ -1324,11 +1325,11 @@ function changeToImg2() {
 
       if (canvas.toBlob) {
          return new Promise((resolve, reject) => {
-            canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Could not create screenshot file")), "image/png");
+             canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Could not create screenshot file")), "image/jpeg", .82);
          }).then(downloadBlob);
       } else {
          const link = document.createElement("a");
-         link.href = canvas.toDataURL("image/png");
+          link.href = canvas.toDataURL("image/jpeg", .82);
          link.download = filename;
          link.click();
       }
