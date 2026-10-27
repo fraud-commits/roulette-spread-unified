@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.55",
+   version: "2.6.56",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -494,6 +494,34 @@ function updateBackgrounds() {
    const w = WHEELS[state.wheel];
    $("#myChart").css("background-image", "url('" + w.wheelImg + "')");
    $("#RouletteLayout").css("background-image", "url('" + w.tableImg + "')");
+}
+
+function loadOverlay(isVisible, message) {
+   const overlay = document.getElementById("loadingOverlay");
+   const text = document.getElementById("loadingMessage");
+   if (!overlay) return;
+   if (text && message) text.textContent = message;
+   overlay.hidden = !isVisible;
+   document.body.classList.toggle("is-refreshing", isVisible);
+}
+
+function refreshData() {
+   const button = document.getElementById("refreshButton");
+   if (button?.disabled) return;
+   if (button) {
+      button.disabled = true;
+      button.classList.add("is-refreshing");
+   }
+   loadOverlay(true, "Refreshing…");
+   Promise.resolve(state.tableauReady || DEMO !== null ? drawChartJS() : null)
+      .catch(error => console.error("Refresh failed:", error))
+      .finally(() => {
+         loadOverlay(false);
+         if (button) {
+            button.disabled = false;
+            button.classList.remove("is-refreshing");
+         }
+      });
 }
 
 function updateWheelLabel() { $(".wheel-label").text(state.wheel === "AMERICAN" ? "AMERICAN" : "EUROPEAN"); }

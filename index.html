@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roulette Spread — Unified</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style/style.css?v=2.6.55">
+  <link rel="stylesheet" href="style/style.css?v=2.6.56">
 </head>
 <body>
   <header class="toolbar">
@@ -26,7 +26,7 @@
       </div>
       <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
       <span>CURRENCY: <b class="cur-label">NATIVE</b></span>
-      <span>VERSION <b class="version-label">2.6.55</b></span>
+      <span>VERSION <b class="version-label">2.6.56</b></span>
     </div>
   </header>
 
@@ -45,7 +45,15 @@
     </label>
     <label class="check-setting winner-setting"><input id="winnerToggle" type="checkbox" checked> Highlight winning number</label>
     <label class="check-setting"><input id="chipValueToggle" type="checkbox" checked> Show chip values</label>
+    <button id="refreshButton" class="refresh-button" type="button" onclick="refreshData()" title="Refresh worksheet data">
+      <span class="refresh-icon" aria-hidden="true">↻</span> Refresh
+    </button>
   </nav>
+
+  <div id="loadingOverlay" class="loading-overlay" hidden aria-live="polite">
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <span id="loadingMessage">Refreshing…</span>
+  </div>
 
   <div class="report-helper-row" data-html2canvas-ignore="true">
     <details class="report-helper">
@@ -105,7 +113,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="js/application.js?v=2.6.55"></script>
+  <script src="js/application.js?v=2.6.56"></script>
   <script>
     document.getElementById('wheelSelect').addEventListener('change', function () {
       CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
