@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roulette Spread — Unified</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style/style.css?v=2.6.38">
+  <link rel="stylesheet" href="style/style.css?v=2.6.39">
 </head>
 <body>
   <header class="toolbar">
@@ -18,15 +18,15 @@
       <span class="lfs-title">ROULETTE SPREAD</span>
     </div>
     <div class="toolbar-meta">
+      <span id="wheelFilterReminder" class="wheel-filter-reminder is-hidden" role="note">Layout: set Bet Type to (All)</span>
       <div class="switch-group" aria-label="View mode">
         <span>WHEEL</span>
         <label class="switch"><input class="mode-switch" type="checkbox" aria-label="Switch between wheel and layout"><span class="slider"></span></label>
         <span>LAYOUT</span>
       </div>
-      <span id="wheelFilterReminder" class="wheel-filter-reminder" role="note">Wheel: set Bet Type to (All)</span>
       <span>WHEEL: <b class="wheel-label">EUROPEAN</b></span>
       <span>CURRENCY: <b class="cur-label">NATIVE</b></span>
-      <span>VERSION <b class="version-label">2.6.38</b></span>
+      <span>VERSION <b class="version-label">2.6.39</b></span>
     </div>
   </header>
 
@@ -105,7 +105,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <script src="js/application.js?v=2.6.38"></script>
+  <script src="js/application.js?v=2.6.39"></script>
   <script>
     document.getElementById('wheelSelect').addEventListener('change', function () {
       CONFIG.wheelAuto = false; state.wheel = this.value; updateWheelLabel(); updateBackgrounds();
