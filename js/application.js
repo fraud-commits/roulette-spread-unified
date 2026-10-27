@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.34",
+   version: "2.6.35",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1306,8 +1306,14 @@ function changeToImg2() {
       type: "view",
       dpi: 144,
       scale: 2,
-      width: toImgArea.scrollWidth,
-      height: toImgArea.scrollHeight
+       width: 2070,
+       onclone: function (clonedDocument) {
+          const clonedScreenshot = clonedDocument.getElementById("sreenshot");
+          if (clonedScreenshot) {
+             clonedScreenshot.style.zoom = "1";
+             clonedScreenshot.style.width = "2070px";
+          }
+       }
    }).then(function (canvas) {
        const filename = getTimestampedFilename("roulette-spread", "jpg");
       const downloadBlob = blob => {
