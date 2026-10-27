@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.31",
+   version: "2.6.32",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1273,6 +1273,7 @@ function changeToImg() {
           context.lineTo(9 * scale, 8 * scale);
           context.lineTo(-9 * scale, 8 * scale);
           context.closePath();
+          context.stroke();
           context.beginPath();
           context.moveTo(-9 * scale, 8 * scale);
           context.lineTo(9 * scale, 8 * scale);
