@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.39",
+   version: "2.6.40",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1018,7 +1018,7 @@ function drawBetChip(context, x, y, amount, showValue) {
 }
 
 function drawWinnerChip(context, x, y) {
-    context.drawImage(IMG["WinGame.png"], x - 33, y - 35, 100, 100);
+    context.drawImage(IMG["WinGame.png"], x - 38.5, y - 35, 100, 100);
 }
 
 /* ------------------------------------------------------------
