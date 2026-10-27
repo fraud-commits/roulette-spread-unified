@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.47",
+   version: "2.6.48",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -534,19 +534,42 @@ function detectColumns(sumdata) {
    const src = sumdata.columns || [];
    const dataRows = sumdata.data || [];
    const columnCount = src.length || (dataRows[0] ? dataRows[0].length : 0);
-   const sampleRows = dataRows.slice(0, 100);
+    const sampleRows = dataRows.slice(0, 100);
+    const columnName = index => String(
+       src[index]?.fieldName || src[index]?.fieldCaption || src[index]?.caption || src[index]?.name || ""
+    ).toUpperCase();
    const numericRate = index => {
       const values = sampleRows.map(row => row[index]).filter(cell => getCellText(cell) !== "");
       if (!values.length) return 0;
       return values.filter(cell => Number.isFinite(parseDisplayedAmount(cell))).length / values.length;
    };
-    const rouletteRate = index => {
-       const values = sampleRows.map(row => getCellText(row[index])).filter(Boolean);
-       if (!values.length) return 0;
-       return values.filter(value => normalizeWinningValue(value) !== null).length / values.length;
-   };
-    const isNumeric = index => index >= 3 && numericRate(index) >= .6;
-    const numericColumns = Array.from({ length: columnCount }, (_, index) => index).filter(isNumeric);
+     const rouletteRate = index => {
+        const values = sampleRows.map(row => getCellText(row[index])).filter(Boolean);
+        if (!values.length) return 0;
+        return values.filter(value => normalizeWinningValue(value) !== null).length / values.length;
+     };
+     const gameTypeRate = index => {
+        const values = sampleRows.map(row => getCellText(row[index])).filter(Boolean);
+        if (!values.length) return 0;
+        return values.filter(value => /ROULETTE/i.test(value)).length / values.length;
+     };
+      const isNumeric = index => index >= 3 && numericRate(index) >= .6;
+      const gameTypeCandidate = Array.from({ length: columnCount }, (_, index) => index)
+         .sort((a, b) => gameTypeRate(b) - gameTypeRate(a))[0];
+      // Win Result may be placed either before or after the money block.
+      // Prefer its caption when Tableau metadata is available, then fall back
+      // to the original roulette-value check for metadata-free payloads.
+      const namedWinning = Array.from({ length: columnCount }, (_, index) => index)
+         .filter(index => index >= 3 && index !== gameTypeCandidate)
+         .filter(index => /WIN|RESULT/.test(columnName(index)) && rouletteRate(index) >= .6)
+         .sort((a, b) => rouletteRate(b) - rouletteRate(a))[0];
+      const likelyWinning = namedWinning ?? (gameTypeCandidate !== undefined && gameTypeRate(gameTypeCandidate) >= .6
+         ? Array.from({ length: gameTypeCandidate }, (_, index) => index)
+            .filter(index => index >= 3 && rouletteRate(index) >= .6)
+            .sort((a, b) => Math.abs(gameTypeCandidate - a) - Math.abs(gameTypeCandidate - b))[0]
+         : null);
+     const isMoneyNumeric = index => isNumeric(index) && index !== likelyWinning;
+     const numericColumns = Array.from({ length: columnCount }, (_, index) => index).filter(isNumeric);
 
     // Helpers such as Title NET are numeric too, but they are not a monetary
     // block. The source worksheet keeps the four amount columns together, so
@@ -554,9 +577,9 @@ function detectColumns(sumdata) {
     // trailing set of numeric helper columns from being selected.
     const moneyRuns = [];
     for (let start = 3; start < columnCount;) {
-       if (!isNumeric(start)) { start++; continue; }
-       let end = start;
-       while (end + 1 < columnCount && isNumeric(end + 1)) end++;
+        if (!isMoneyNumeric(start)) { start++; continue; }
+        let end = start;
+        while (end + 1 < columnCount && isMoneyNumeric(end + 1)) end++;
        const runLength = end - start + 1;
        if (runLength >= 4) {
           // If a numeric helper directly precedes the money block (for
@@ -576,9 +599,7 @@ function detectColumns(sumdata) {
        // Prefer explicit field metadata when available. It is used only to
        // distinguish EUR/native and BET/NET inside the already structural
        // block; helper fields never enter this block.
-       const moneyNames = moneyColumns.map(index => String(
-          src[index]?.fieldName || src[index]?.fieldCaption || src[index]?.caption || src[index]?.name || ""
-       ).toUpperCase());
+        const moneyNames = moneyColumns.map(columnName);
         const findMoney = (kind, currencies) => {
            const acceptedCurrencies = Array.isArray(currencies) ? currencies : [currencies];
            const index = moneyNames.findIndex(name => name.includes(kind) && acceptedCurrencies.some(currency => name.includes(currency)));
@@ -604,14 +625,16 @@ function detectColumns(sumdata) {
           [cols.BetEur, cols.BetNative, cols.NetEur, cols.NetNative] = moneyColumns;
        }
     }
-    cols.WinningNumber = null;
-    const moneyStart = moneyColumns.length === 4 ? moneyColumns[0] : columnCount;
-   for (let candidate = 3; candidate < moneyStart; candidate++) {
-      if (rouletteRate(candidate) >= .6) {
-         cols.WinningNumber = candidate;
-          break;
-       }
-    }
+     cols.WinningNumber = likelyWinning;
+     const moneyStart = moneyColumns.length === 4 ? moneyColumns[0] : columnCount;
+     if (cols.WinningNumber === null) {
+        for (let candidate = 3; candidate < moneyStart; candidate++) {
+           if (rouletteRate(candidate) >= .6) {
+              cols.WinningNumber = candidate;
+              break;
+           }
+        }
+     }
 
     // Live worksheets can contain dimensions before Round Id and Bet Position.
     // Detect those values by their data shape, while retaining the configured
