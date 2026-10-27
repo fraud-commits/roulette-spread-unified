@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.54",
+   version: "2.6.55",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -500,7 +500,7 @@ function updateWheelLabel() { $(".wheel-label").text(state.wheel === "AMERICAN" 
 
 function updateCurrencyLabels() {
    const label = state.currency === "NATIVE" ? "NATIVE" : "EUR";
-   $(".cur-label, .examples-cur-label").text(label);
+   $(".cur-label").text(state.currency === "NATIVE" ? "NATIVE" : "EUR");
 }
 
 /* ------------------------------------------------------------
