@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.59",
+   version: "2.6.60",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1422,9 +1422,15 @@ function changeToImg() {
 }
 
 function changeToImg2() {
-   const toImgArea = document.getElementById("sreenshot");
-   const button = document.getElementById("generateButton");
-   if (!toImgArea || !toImgArea.querySelector("canvas")) return;
+    const toImgArea = document.getElementById("sreenshot");
+    const button = document.getElementById("generateButton");
+    if (!toImgArea || !toImgArea.querySelector("canvas")) return;
+    const exampleCanvases = Array.from(toImgArea.querySelectorAll("canvas"));
+    const isLayoutExport = exampleCanvases.some(canvas => canvas.classList.contains("example-layout"));
+    const itemWidth = isLayoutExport ? 1000 : 470;
+    const itemsPerRow = isLayoutExport ? 2 : 4;
+    const columns = Math.min(itemsPerRow, exampleCanvases.length);
+    const exportWidth = columns * itemWidth + Math.max(0, columns - 1) * 12;
    if (button) {
       if (button.disabled) return;
       button.disabled = true;
@@ -1437,12 +1443,12 @@ function changeToImg2() {
       type: "view",
       dpi: 144,
       scale: 2,
-       width: 2070,
+       width: exportWidth,
        onclone: function (clonedDocument) {
           const clonedScreenshot = clonedDocument.getElementById("sreenshot");
-           if (clonedScreenshot) {
+          if (clonedScreenshot) {
               clonedScreenshot.style.zoom = "1";
-              clonedScreenshot.style.width = "2070px";
+              clonedScreenshot.style.width = exportWidth + "px";
               clonedScreenshot.style.position = "relative";
               const currencyBadge = clonedDocument.createElement("span");
               currencyBadge.textContent = "CURRENCY: " + (state.currency === "NATIVE" ? "NATIVE" : "EUR");
