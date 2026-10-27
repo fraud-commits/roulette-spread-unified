@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.57",
+   version: "2.6.58",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -547,7 +547,7 @@ function checkPlayerParameter() {
          const name = String(item.name || "");
          return /player|user/i.test(name) && /id|filter/i.test(name);
       });
-      const visibleId = normalizePlayerId(document.getElementById("playerIdLabel")?.textContent);
+      const visibleId = normalizePlayerId(window.__roulettePlayerId);
       const value = parameter?.currentValue?.formattedValue ?? parameter?.currentValue?.value ?? parameter?.value;
       const tableauId = normalizePlayerId(value);
       setPlayerMismatch(Boolean(visibleId && tableauId && visibleId !== tableauId));
@@ -582,8 +582,9 @@ function updateColumnDiagnostics(sumdata, cols) {
    const lines = [
        "Worksheet columns: " + columnCount + (src.length ? " (metadata available)" : " (inferred from row length)"),
        "Rows received: " + rows.length,
-      "Detected mapping: " + Object.entries(cols).map(([role, index]) => role + "=" + index).join(" | "),
-      "",
+       "Detected mapping: " + Object.entries(cols).map(([role, index]) => role + "=" + index).join(" | "),
+       "Player ID reference: " + (cols.PlayerID !== undefined && rows[0] ? getCellText(rows[0][cols.PlayerID]) : "not detected"),
+       "",
       "INDEX | FIELD/CAPTION | DETECTED ROLE | SAMPLE"
    ];
     Array.from({ length: columnCount }, (_, index) => index).forEach(index => {
@@ -824,9 +825,8 @@ function getSelectedRoundIds(selectedMarks, summary) {
 function render(sumdata) {
    let worksheetData = sumdata.data;
    const cols = detectColumns(sumdata);
-   const playerLabel = document.getElementById("playerIdLabel");
    const playerCell = cols.PlayerID !== undefined && worksheetData[0] ? worksheetData[0][cols.PlayerID] : null;
-   if (playerLabel) playerLabel.textContent = playerCell ? getCellText(playerCell) : "—";
+   window.__roulettePlayerId = playerCell ? getCellText(playerCell) : "";
 
     const RoundTime = cols.RoundTime,
          RoundID = cols.RoundID;
