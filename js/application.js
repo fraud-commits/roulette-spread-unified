@@ -19,13 +19,13 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.36",
+   version: "2.6.37",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
    wheel: "EUROPEAN",       // 'EUROPEAN' | 'AMERICAN'  (или 'AUTO' из данных)
    wheelAuto: true,         // определять колесо автоматически по данным (SPLIT_00..., STRAIGHT_UP_00 и т.д.)
-   currency: "EUR",         // 'EUR' | 'NATIVE'
+   currency: "NATIVE",      // 'EUR' | 'NATIVE'
    showWinner: true,        // рисовать фишку выигрышного номера (если колонка есть)
 
    /* Индексы колонок. Если автодetection по имени не сработает — берутся эти значения. */
