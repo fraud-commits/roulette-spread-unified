@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.50",
+   version: "2.6.51",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -469,17 +469,26 @@ function fitWheelCanvas() {
 
 /* Слушатели фильтров/марок рабочего листа */
 function getSettings() {
-   const worksheets = tableau.extensions.dashboardContent.dashboard.worksheets;
-   const worksheet = worksheets.find(s => s.name === CONFIG.worksheetName);
-   if (!worksheet) { console.log("Worksheet '" + CONFIG.worksheetName + "' not found"); return; }
+    const worksheets = tableau.extensions.dashboardContent.dashboard.worksheets;
+    const worksheet = getDataWorksheet(worksheets);
+    if (!worksheet) { console.log("No Tableau worksheet available for roulette data"); return; }
 
    if (unregisterFilterEventListener) unregisterFilterEventListener();
    if (unregisterMarkSelectionEventListener) unregisterMarkSelectionEventListener();
 
    unregisterFilterEventListener = worksheet.addEventListener(
       tableau.TableauEventType.FilterChanged, () => drawChartJS());
-   unregisterMarkSelectionEventListener = worksheet.addEventListener(
-      tableau.TableauEventType.MarkSelectionChanged, () => drawChartJS());
+    unregisterMarkSelectionEventListener = worksheet.addEventListener(
+       tableau.TableauEventType.MarkSelectionChanged, () => drawChartJS());
+}
+
+function getDataWorksheet(worksheets) {
+   if (!worksheets || !worksheets.length) return null;
+   // Keep the configured name first, but support the original workbook name
+   // and dashboards where the data sheet is the only available worksheet.
+   return worksheets.find(sheet => sheet.name === CONFIG.worksheetName)
+      || worksheets.find(sheet => sheet.name === "work2")
+      || worksheets[0];
 }
 
 /* ------------------------------------------------------------
@@ -691,8 +700,8 @@ function drawChartJS() {
       source = Promise.resolve(buildDemoData());
    } else {
       const worksheets = tableau.extensions.dashboardContent.dashboard.worksheets;
-      const worksheet = worksheets.find(s => s.name === CONFIG.worksheetName);
-      if (!worksheet) { console.log("Worksheet '" + CONFIG.worksheetName + "' not found"); return; }
+       const worksheet = getDataWorksheet(worksheets);
+       if (!worksheet) { console.log("No Tableau worksheet available for roulette data"); return; }
        source = Promise.all([
           worksheet.getSummaryDataAsync(),
           worksheet.getSelectedMarksAsync().catch(() => ({ columns: [], data: [] }))
