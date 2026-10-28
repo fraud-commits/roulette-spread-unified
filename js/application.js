@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.73",
+   version: "2.6.74",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -642,7 +642,13 @@ function detectColumns(sumdata) {
         })
         .filter(Boolean)
         .sort((a, b) => b.score - a.score)[0]?.index;
-     const playerIdCandidate = namedPlayerIdCandidate ?? playerIdCandidates;
+     // Metadata-free Tableau mark payloads keep Player Id after Game Type and
+     // before the Title NET helper: time, round, bet position, win number,
+     // game type, player id, helper, then the four money columns. Prefer this
+     // stable positional slot so a numeric winning number cannot be mistaken
+     // for Player ID (for example Win Num=17).
+     const positionalPlayerId = columnCount >= 11 ? 5 : undefined;
+     const playerIdCandidate = namedPlayerIdCandidate ?? positionalPlayerId ?? playerIdCandidates;
     if (playerIdCandidate !== undefined) cols.PlayerID = playerIdCandidate;
    const numericRate = index => {
       const values = sampleRows.map(row => row[index]).filter(cell => getCellText(cell) !== "");
