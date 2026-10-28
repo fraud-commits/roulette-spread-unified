@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.71",
+   version: "2.6.72",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -619,17 +619,30 @@ function detectColumns(sumdata) {
     const columnName = index => String(
        src[index]?.fieldName || src[index]?.fieldCaption || src[index]?.caption || src[index]?.name || ""
     ).toUpperCase();
-    const playerIdCandidate = Array.from({ length: columnCount }, (_, index) => index)
-       .find(index => /PLAYER\s*ID|USER\s*ID/.test(columnName(index)))
-       ?? Array.from({ length: columnCount }, (_, index) => index).find(index => {
-          const values = sampleRows.map(row => getCellText(row[index])).filter(Boolean);
-          if (!values.length) return false;
-          if (values.every(value => value.includes(":") && /^[a-z0-9_.:-]{8,}$/i.test(value))) return true;
-          if (new Set(values).size / values.length > .25) return false;
-          return values.every(value => /^\d{5,}$/.test(value)
-             || /^[a-z][a-z0-9]*[_-]\d{4,}$/i.test(value)
-             || (value.includes(":") && /^[a-z0-9_.:-]{8,}$/i.test(value)));
-       });
+     const namedPlayerIdCandidate = Array.from({ length: columnCount }, (_, index) => index)
+        .find(index => /PLAYER\s*ID|USER\s*ID/.test(columnName(index)));
+     const playerIdCandidates = Array.from({ length: columnCount }, (_, index) => index)
+        .map(index => {
+           const values = sampleRows.map(row => getCellText(row[index])).filter(Boolean);
+           if (!values.length) return null;
+           const uniqueRate = new Set(values).size / values.length;
+           const tokenRate = values.filter(value =>
+              (value.includes(":") && /^[a-z0-9_.:-]{8,}$/i.test(value))
+              || /^[a-z][a-z0-9]*[_-]\d{4,}$/i.test(value)
+              || /^\d{5,}$/.test(value)
+           ).length / values.length;
+           // A Player ID is often repeated on every bet row. Do not require
+           // uniqueness here: that rule incorrectly selected RoundID before.
+           const stableNumericRate = values.filter(value => /^\d+$/.test(value)).length / values.length;
+           const likelyPlayer = tokenRate >= .6 || stableNumericRate >= .6;
+           if (!likelyPlayer) return null;
+           const structuralPenalty = index <= 4 ? 0.35 : 0;
+           const roundPenalty = index === CONFIG.columns.RoundID ? 0.75 : 0;
+           return { index, score: tokenRate * 3 + (1 - uniqueRate) - structuralPenalty - roundPenalty };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.score - a.score)[0]?.index;
+     const playerIdCandidate = namedPlayerIdCandidate ?? playerIdCandidates;
     if (playerIdCandidate !== undefined) cols.PlayerID = playerIdCandidate;
    const numericRate = index => {
       const values = sampleRows.map(row => row[index]).filter(cell => getCellText(cell) !== "");
