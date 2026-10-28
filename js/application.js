@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.67",
+   version: "2.6.68",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1314,6 +1314,11 @@ function changeToImg() {
              title.style.margin = "0 0 10px";
              title.style.height = "auto";
              title.style.fontSize = isLayout ? "26px" : "22px";
+             // Reserve two title lines so examples with a wrapped title do
+             // not push their Wheel/Layout to a different vertical position.
+             title.style.height = isLayout ? "62px" : "52px";
+             title.style.lineHeight = isLayout ? "30px" : "26px";
+             title.style.overflow = "hidden";
           }
           if (isLayout) {
              const wrapper = clonedArea.querySelector(".layout-container");
