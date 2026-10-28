@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.68",
+   version: "2.6.69",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -467,6 +467,9 @@ function fitWheelCanvas() {
    const size = Math.floor(Math.min(470, widthLimit * 480 / 1143, heightLimit));
    wrapper.style.width = size + "px";
    wrapper.style.height = size + "px";
+   if (window.__wheelOutlineState) {
+      drawWheelWinnerOutline(window.__wheelOutlineState.labels, window.__wheelOutlineState.winnerLabel);
+   }
 }
 
 /* Слушатели фильтров/марок рабочего листа */
@@ -1149,7 +1152,13 @@ function drawWinnerChip(context, x, y) {
        : cellCentersX.reduce((closest, value) => Math.abs(value - (x + 11.5)) < Math.abs(closest - (x + 11.5)) ? value : closest, cellCentersX[0]);
     const centerY = cellCentersY[y] ?? (y + 15);
     const drawCellOutline = () => {
-       if (x === 60) context.strokeRect(37, 21, 76, 297);
+       if (x === 60) {
+          if (state.wheel === "AMERICAN") {
+             context.strokeRect(37, y < 170 ? 21 : 166, 76, y < 170 ? 145 : 152);
+          } else {
+             context.strokeRect(37, 21, 76, 297);
+          }
+       }
        else context.strokeRect(centerX - 38.5, centerY - 49, 77, 98);
     };
     context.save();
@@ -1170,10 +1179,64 @@ function drawWinnerChip(context, x, y) {
 /* ------------------------------------------------------------
    РАДАР (Chart.js)
    ------------------------------------------------------------ */
+function drawWheelWinnerOutline(labels, winnerLabel) {
+   const base = document.getElementById("myChart");
+   const parent = base?.parentElement;
+   document.getElementById("wheelWinnerOutline")?.remove();
+   if (!base || !parent || winnerLabel === null || winnerLabel === undefined) return;
+   const winnerIndex = labels.indexOf(String(winnerLabel));
+   if (winnerIndex < 0) return;
+   const rect = base.getBoundingClientRect();
+   if (!rect.width || !rect.height) return;
+   const overlay = document.createElement("canvas");
+   overlay.id = "wheelWinnerOutline";
+   Object.assign(overlay.style, {
+      position: "absolute",
+      left: base.offsetLeft + "px",
+      top: base.offsetTop + "px",
+      width: rect.width + "px",
+      height: rect.height + "px",
+      pointerEvents: "none",
+      zIndex: "4"
+   });
+   const dpr = window.devicePixelRatio || 1;
+   overlay.width = Math.round(rect.width * dpr);
+   overlay.height = Math.round(rect.height * dpr);
+   parent.appendChild(overlay);
+   const context = overlay.getContext("2d");
+   context.scale(dpr, dpr);
+   const size = Math.min(rect.width, rect.height);
+   const centerX = rect.width / 2;
+   const centerY = rect.height / 2;
+   const step = Math.PI * 2 / labels.length;
+   const start = -Math.PI / 2 - step / 2 + winnerIndex * step;
+   const outerRadius = size * .499;
+   const innerRadius = size * .415;
+   const a = start;
+   const b = start + step;
+   const points = [
+      [centerX + outerRadius * Math.cos(a), centerY + outerRadius * Math.sin(a)],
+      [centerX + outerRadius * Math.cos(b), centerY + outerRadius * Math.sin(b)],
+      [centerX + innerRadius * Math.cos(b), centerY + innerRadius * Math.sin(b)],
+      [centerX + innerRadius * Math.cos(a), centerY + innerRadius * Math.sin(a)]
+   ];
+   context.save();
+   context.strokeStyle = "#00CFA3";
+   context.lineWidth = 3;
+   context.lineJoin = "round";
+   context.beginPath();
+   context.moveTo(points[0][0], points[0][1]);
+   points.slice(1).forEach(point => context.lineTo(point[0], point[1]));
+   context.closePath();
+   context.stroke();
+   context.restore();
+}
+
 function drawRadar(labels, data, winnerLabel = null) {
-    $("#myChart").remove();
-    $(".wheel-winner-crown").remove();
-    $(".roulette-container").append('<canvas id="myChart" class="neww"></canvas>');
+   $("#myChart").remove();
+   $(".wheel-winner-crown").remove();
+   $("#wheelWinnerOutline").remove();
+   $(".roulette-container").append('<canvas id="myChart" class="neww"></canvas>');
    updateBackgrounds();
 
    const grey = "rgb(77, 77, 77)";
@@ -1241,27 +1304,8 @@ function drawRadar(labels, data, winnerLabel = null) {
        }
     });
 
-    if (winnerLabel !== null && winnerLabel !== undefined) {
-       const winnerIndex = labels.indexOf(String(winnerLabel));
-          if (winnerIndex >= 0) {
-          const angle = -Math.PI / 2 + (Math.PI * 2 * winnerIndex / labels.length);
-          const canvas = document.getElementById("myChart");
-          const container = document.querySelector(".roulette-container");
-          const size = canvas ? Math.min(canvas.clientWidth, canvas.clientHeight) : 470;
-          const centerX = (canvas ? canvas.offsetLeft : 0) + size / 2;
-          const centerY = (canvas ? canvas.offsetTop : 0) + size / 2;
-          const crownRadius = size * .56;
-          const crown = document.createElement("span");
-          crown.className = "wheel-winner-crown";
-          crown.setAttribute("aria-label", "Winning number marker");
-          crown.dataset.angle = String(angle);
-          crown.style.left = (centerX + Math.cos(angle) * crownRadius) + "px";
-          crown.style.top = (centerY + Math.sin(angle) * crownRadius) + "px";
-          crown.style.transform = "translate(-50%, -50%) rotate(" + (angle + Math.PI / 2) + "rad)";
-          crown.innerHTML = '<svg viewBox="0 0 30 24" aria-hidden="true"><path d="M3 5l5 6 7-8 7 8 5-6-3 15H6L3 5zM6 20h18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg>';
-          document.querySelector(".roulette-container")?.appendChild(crown);
-       }
-    }
+    window.__wheelOutlineState = { labels, winnerLabel };
+    drawWheelWinnerOutline(labels, winnerLabel);
 }
 
 /* ------------------------------------------------------------
