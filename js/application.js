@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.69",
+   version: "2.6.70",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1221,7 +1221,7 @@ function drawWheelWinnerOutline(labels, winnerLabel) {
       [centerX + innerRadius * Math.cos(a), centerY + innerRadius * Math.sin(a)]
    ];
    context.save();
-   context.strokeStyle = "#00CFA3";
+   context.strokeStyle = "#00F4BB";
    context.lineWidth = 3;
    context.lineJoin = "round";
    context.beginPath();
