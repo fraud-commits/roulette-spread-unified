@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.72",
+   version: "2.6.73",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -586,7 +586,7 @@ function updateColumnDiagnostics(sumdata, cols) {
    const src = sumdata.columns || [];
    const dataRows = sumdata.data || [];
     const columnCount = src.length || (dataRows[0] ? dataRows[0].length : 0);
-   const roleByIndex = new Map(Object.entries(cols).map(([role, index]) => [index, role]));
+    const roleByIndex = new Map(Object.entries(cols).map(([role, index]) => [String(index), role]));
    const sample = row => row ? getCellText(row) : "";
    const rows = sumdata.data || [];
    const lines = [
