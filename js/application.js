@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.70",
+   version: "2.6.71",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1322,6 +1322,7 @@ function changeToImg() {
     const isLayout = exampleSwitch ? exampleSwitch.checked : !$(".container-2").hasClass("hide");
     if (exampleSwitch && window.setViewMode) window.setViewMode(isLayout);
     const toImgArea = document.getElementById(isLayout ? "imgItcontainerem2" : "imgItcontainerem");
+    const wheelOutlineState = window.__wheelOutlineState;
     const sourceCrown = toImgArea ? toImgArea.querySelector(".wheel-winner-crown") : null;
     const exportAngle = sourceCrown ? Number(sourceCrown.dataset.angle) : NaN;
 
@@ -1380,7 +1381,7 @@ function changeToImg() {
                 layoutCanvas.style.marginLeft = "auto";
                 layoutCanvas.style.marginRight = "auto";
              }
-           } else {
+            } else {
               const wheel = clonedArea.querySelector(".roulette-container");
                if (wheel) {
                 wheel.style.display = "flex";
@@ -1392,12 +1393,60 @@ function changeToImg() {
                  wheel.style.setProperty("margin-right", "auto", "important");
                  wheel.style.setProperty("margin-top", "44px", "important");
                   const exportCanvas = wheel.querySelector("#myChart");
-                  const exportCrown = wheel.querySelector(".wheel-winner-crown");
+                   const exportCrown = wheel.querySelector(".wheel-winner-crown");
+                   const exportOutline = wheel.querySelector("#wheelWinnerOutline");
                   // SVG overlays are unreliable in html2canvas. Save the
                   // Wheel geometry and remove the overlay; the crown is
                   // rasterized onto the final export below.
-                  if (exportCrown) exportCrown.remove();
-                  if (exportCanvas && exportCrown) {
+                   if (exportCrown) exportCrown.remove();
+                   if (exportOutline) exportOutline.remove();
+                   if (wheelOutlineState && wheelOutlineState.winnerLabel !== null && wheelOutlineState.winnerLabel !== undefined) {
+                       const labels = wheelOutlineState.labels || [];
+                      const winnerIndex = labels.indexOf(String(wheelOutlineState.winnerLabel));
+                      if (exportCanvas && winnerIndex >= 0) {
+                         const overlay = clonedDocument.createElement("canvas");
+                         overlay.id = "wheelWinnerOutline";
+                         const width = exportCanvas.clientWidth || 470;
+                         const height = exportCanvas.clientHeight || 470;
+                         Object.assign(overlay.style, {
+                            position: "absolute",
+                            left: exportCanvas.offsetLeft + "px",
+                            top: exportCanvas.offsetTop + "px",
+                            width: width + "px",
+                            height: height + "px",
+                            pointerEvents: "none",
+                            zIndex: "4"
+                         });
+                         overlay.width = width;
+                         overlay.height = height;
+                         wheel.appendChild(overlay);
+                         const outlineContext = overlay.getContext("2d");
+                         const size = Math.min(width, height);
+                         const cx = width / 2;
+                         const cy = height / 2;
+                         const step = Math.PI * 2 / labels.length;
+                         const start = -Math.PI / 2 - step / 2 + winnerIndex * step;
+                         const ro = size * .499;
+                         const ri = size * .415;
+                         const a = start;
+                         const b = start + step;
+                         const points = [
+                            [cx + ro * Math.cos(a), cy + ro * Math.sin(a)],
+                            [cx + ro * Math.cos(b), cy + ro * Math.sin(b)],
+                            [cx + ri * Math.cos(b), cy + ri * Math.sin(b)],
+                            [cx + ri * Math.cos(a), cy + ri * Math.sin(a)]
+                         ];
+                         outlineContext.strokeStyle = "#00F4BB";
+                         outlineContext.lineWidth = 3;
+                         outlineContext.lineJoin = "round";
+                         outlineContext.beginPath();
+                         outlineContext.moveTo(points[0][0], points[0][1]);
+                         points.slice(1).forEach(point => outlineContext.lineTo(point[0], point[1]));
+                         outlineContext.closePath();
+                         outlineContext.stroke();
+                      }
+                   }
+                   if (exportCanvas && exportCrown) {
                      const exportSize = Math.min(exportCanvas.clientWidth, exportCanvas.clientHeight);
                      const areaRect = clonedArea.getBoundingClientRect();
                      const wheelRect = wheel.getBoundingClientRect();
