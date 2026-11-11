@@ -19,7 +19,7 @@
    ============================================================ */
 
 const CONFIG = {
-   version: "2.6.74",
+   version: "2.6.75",
    worksheetName: "work",
 
    /* Значения по умолчанию, меняются переключателями на дашборде */
@@ -1373,17 +1373,30 @@ function changeToImg() {
            clonedArea.style.alignItems = "center";
            clonedArea.style.position = "relative";
 
-          const title = clonedArea.querySelector(".idround");
-          if (title) {
-             title.style.margin = "0 0 10px";
-             title.style.height = "auto";
-             title.style.fontSize = isLayout ? "26px" : "22px";
-             // Reserve two title lines so examples with a wrapped title do
-             // not push their Wheel/Layout to a different vertical position.
-             title.style.height = isLayout ? "62px" : "52px";
-             title.style.lineHeight = isLayout ? "30px" : "26px";
-             title.style.overflow = "hidden";
-          }
+           const title = clonedArea.querySelector(".idround");
+           if (title) {
+              title.style.margin = "0 0 10px";
+              title.style.height = "auto";
+              title.style.fontSize = isLayout ? "26px" : "28px";
+              // Reserve two title lines so examples with a wrapped title do
+              // not push their Wheel/Layout to a different vertical position.
+              title.style.height = isLayout ? "62px" : "70px";
+              title.style.lineHeight = isLayout ? "30px" : "32px";
+              title.style.overflow = "hidden";
+              if (!isLayout) {
+                 const titleText = title.textContent.trim();
+                 const spreadMarker = " Straight-Up Bet Spread";
+                 const markerIndex = titleText.indexOf(spreadMarker);
+                 if (markerIndex > 0) {
+                    title.textContent = "";
+                    title.append(
+                       clonedDocument.createTextNode(titleText.slice(0, markerIndex)),
+                       clonedDocument.createElement("br"),
+                       clonedDocument.createTextNode(titleText.slice(markerIndex + 1))
+                    );
+                 }
+              }
+           }
           if (isLayout) {
              const wrapper = clonedArea.querySelector(".layout-container");
              const layoutCanvas = clonedArea.querySelector("#RouletteLayout");
